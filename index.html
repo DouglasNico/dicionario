@@ -1,0 +1,2878 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dicionário Inglês–Português para celular com pronúncia, flashcards, quiz e uso offline.">
+  <meta name="theme-color" content="#f6f7f9" id="meta-theme-color">
+  <title>Dicionário Inglês–Português</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    /* Variáveis de tema claro (padrão editorial limpo) */
+    :root {
+      color-scheme: light;
+      --cor-fundo: #f6f7f9;
+      --cor-superficie: #ffffff;
+      --cor-superficie-alt: #f1f5f9;
+      --cor-nav-fundo: rgba(255, 255, 255, 0.92);
+      --cor-texto: #0f172a;
+      --cor-texto-sec: #64748b;
+      --cor-borda: #e2e8f0;
+      --cor-borda-forte: #cbd5e1;
+      --cor-primaria: #2563eb;
+      --cor-primaria-hover: #1d4ed8;
+      --cor-primaria-suave: rgba(37, 99, 235, 0.10);
+      --cor-primaria-texto: #1d4ed8;
+      --cor-salvo-fundo: #ecfdf5;
+      --cor-salvo-texto: #047857;
+      --cor-salvo-borda: #6ee7b7;
+      --cor-erro-fundo: #fef2f2;
+      --cor-erro-texto: #b91c1c;
+      --cor-erro-borda: #fca5a5;
+      --cor-alerta-fundo: #fffbeb;
+      --cor-alerta-borda: #d97706;
+      --cor-alerta-texto: #92400e;
+      --cor-sombra: 0 1px 3px rgba(15, 23, 42, 0.05), 0 6px 20px rgba(15, 23, 42, 0.04);
+      --raio: 16px;
+    }
+
+    /* Segue automaticamente o tema escuro do sistema quando não há preferência manual */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-tema="light"]) {
+        color-scheme: dark;
+        --cor-fundo: #0b1120;
+        --cor-superficie: #111827;
+        --cor-superficie-alt: #1e293b;
+        --cor-nav-fundo: rgba(17, 24, 39, 0.92);
+        --cor-texto: #f8fafc;
+        --cor-texto-sec: #94a3b8;
+        --cor-borda: #1f2937;
+        --cor-borda-forte: #334155;
+        --cor-primaria: #3b82f6;
+        --cor-primaria-hover: #60a5fa;
+        --cor-primaria-suave: rgba(59, 130, 246, 0.15);
+        --cor-primaria-texto: #93c5fd;
+        --cor-salvo-fundo: rgba(16, 185, 129, 0.14);
+        --cor-salvo-texto: #6ee7b7;
+        --cor-salvo-borda: rgba(16, 185, 129, 0.45);
+        --cor-erro-fundo: rgba(239, 68, 68, 0.14);
+        --cor-erro-texto: #fca5a5;
+        --cor-erro-borda: rgba(239, 68, 68, 0.45);
+        --cor-alerta-fundo: rgba(245, 158, 11, 0.12);
+        --cor-alerta-borda: #f59e0b;
+        --cor-alerta-texto: #fde68a;
+        --cor-sombra: 0 2px 10px rgba(0, 0, 0, 0.25);
+      }
+    }
+
+    /* Tema escuro ativado manualmente */
+    :root[data-tema="dark"] {
+      color-scheme: dark;
+      --cor-fundo: #0b1120;
+      --cor-superficie: #111827;
+      --cor-superficie-alt: #1e293b;
+      --cor-nav-fundo: rgba(17, 24, 39, 0.92);
+      --cor-texto: #f8fafc;
+      --cor-texto-sec: #94a3b8;
+      --cor-borda: #1f2937;
+      --cor-borda-forte: #334155;
+      --cor-primaria: #3b82f6;
+      --cor-primaria-hover: #60a5fa;
+      --cor-primaria-suave: rgba(59, 130, 246, 0.15);
+      --cor-primaria-texto: #93c5fd;
+      --cor-salvo-fundo: rgba(16, 185, 129, 0.14);
+      --cor-salvo-texto: #6ee7b7;
+      --cor-salvo-borda: rgba(16, 185, 129, 0.45);
+      --cor-erro-fundo: rgba(239, 68, 68, 0.14);
+      --cor-erro-texto: #fca5a5;
+      --cor-erro-borda: rgba(239, 68, 68, 0.45);
+      --cor-alerta-fundo: rgba(245, 158, 11, 0.12);
+      --cor-alerta-borda: #f59e0b;
+      --cor-alerta-texto: #fde68a;
+      --cor-sombra: 0 2px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      max-width: 100%;
+      overflow-x: hidden;
+      background-color: var(--cor-fundo);
+      color: var(--cor-texto);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Margem lateral de 16px e espaço inferior para a barra de abas no celular */
+    .app-container {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: 92px;
+    }
+
+    .icone {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    /* Cabeçalho compacto */
+    .cabecalho {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .marca {
+      min-width: 0;
+    }
+
+    .marca h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+    }
+
+    .marca-sub {
+      margin: 2px 0 0;
+      font-size: 0.85rem;
+      color: var(--cor-texto-sec);
+    }
+
+    .topo-direita {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .pilula-progresso {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background-color: var(--cor-superficie);
+      border: 1px solid var(--cor-borda);
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: var(--cor-texto);
+    }
+
+    .pilula-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pilula-sep {
+      width: 1px;
+      height: 14px;
+      background-color: var(--cor-borda-forte);
+    }
+
+    .cor-fogo {
+      color: #f97316;
+    }
+
+    /* Regra geral: controles tocáveis com mínimo de 44px */
+    button, .btn {
+      min-height: 44px;
+      min-width: 44px;
+      font-family: inherit;
+      font-size: 0.96rem;
+      font-weight: 600;
+      border-radius: 12px;
+      border: 1px solid var(--cor-borda);
+      background-color: var(--cor-superficie);
+      color: var(--cor-texto);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 14px;
+      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    /* Seletor customizado no estilo do aplicativo */
+    .select-nativo-oculto {
+      display: none !important;
+    }
+
+    .select-custom {
+      position: relative;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .select-trigger {
+      width: 100%;
+      min-height: 44px;
+      justify-content: space-between;
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      background-color: var(--cor-superficie);
+      border: 1px solid var(--cor-borda);
+      border-radius: 12px;
+      color: var(--cor-texto);
+    }
+
+    .select-trigger[aria-expanded="true"] {
+      border-color: var(--cor-primaria);
+      box-shadow: 0 0 0 2px var(--cor-primaria-suave);
+    }
+
+    .select-trigger-texto {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .select-chevron {
+      color: var(--cor-texto-sec);
+      transition: transform 0.18s ease;
+    }
+
+    .select-trigger[aria-expanded="true"] .select-chevron {
+      transform: rotate(180deg);
+    }
+
+    .select-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      min-width: 210px;
+      z-index: 35;
+      margin: 0;
+      padding: 6px;
+      list-style: none;
+      background-color: var(--cor-superficie);
+      border: 1px solid var(--cor-borda-forte);
+      border-radius: 14px;
+      box-shadow: var(--cor-sombra);
+      max-height: 270px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .select-menu.aberto {
+      display: block;
+    }
+
+    /* Em colunas estreitas à direita, alinha o menu pela direita para não vazar da tela */
+    .select-custom.alinhar-direita .select-menu {
+      left: auto;
+      right: 0;
+    }
+
+    .select-opcao {
+      width: 100%;
+      min-height: 44px;
+      justify-content: space-between;
+      text-align: left;
+      padding: 9px 12px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--cor-texto);
+      font-size: 0.93rem;
+      font-weight: 500;
+    }
+
+    .select-opcao:hover {
+      background-color: var(--cor-superficie-alt);
+    }
+
+    .select-opcao.ativa {
+      background-color: var(--cor-primaria-suave);
+      color: var(--cor-primaria-texto);
+      font-weight: 700;
+    }
+
+    /* Barras de rolagem discretas no estilo do app */
+    html, .lista-sugestoes, .select-menu {
+      scrollbar-width: thin;
+      scrollbar-color: var(--cor-borda-forte) transparent;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--cor-borda-forte);
+      border-radius: 999px;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid var(--cor-primaria);
+      outline-offset: 2px;
+    }
+
+    .btn-icone {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+    }
+
+    .btn-primario {
+      background-color: var(--cor-primaria);
+      border-color: var(--cor-primaria);
+      color: #ffffff;
+    }
+
+    .btn-primario:hover:not(:disabled) {
+      background-color: var(--cor-primaria-hover);
+      border-color: var(--cor-primaria-hover);
+    }
+
+    .btn-suave {
+      background-color: var(--cor-superficie-alt);
+      border-color: transparent;
+      color: var(--cor-texto);
+    }
+
+    /* Aviso offline */
+    .banner-offline {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background-color: var(--cor-primaria-suave);
+      color: var(--cor-primaria-texto);
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .banner-offline.visivel {
+      display: flex;
+    }
+
+    /* Barra de navegação: fixa no rodapé no celular, no topo em telas largas */
+    .abas {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
+      background-color: var(--cor-nav-fundo);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--cor-borda);
+    }
+
+    .aba-btn {
+      position: relative;
+      flex-direction: column;
+      gap: 3px;
+      height: 54px;
+      min-height: 54px;
+      padding: 6px 4px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--cor-texto-sec);
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .aba-btn.ativa {
+      background-color: var(--cor-primaria-suave);
+      border-color: var(--cor-primaria);
+      color: var(--cor-primaria-texto);
+    }
+
+    @media (min-width: 640px) {
+      .app-container {
+        padding-bottom: 40px;
+      }
+
+      .abas {
+        position: static;
+        background-color: var(--cor-superficie);
+        border: 1px solid var(--cor-borda);
+        border-radius: 14px;
+        padding: 4px;
+        margin-bottom: 16px;
+        backdrop-filter: none;
+      }
+
+      .aba-btn {
+        flex-direction: row;
+        gap: 6px;
+        height: 44px;
+        min-height: 44px;
+        font-size: 0.92rem;
+      }
+    }
+
+    /* Campo de busca principal */
+    .busca-wrapper {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .busca-caixa {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background-color: var(--cor-superficie);
+      border: 1px solid var(--cor-borda-forte);
+      border-radius: var(--raio);
+      padding: 4px 6px 4px 14px;
+      box-shadow: var(--cor-sombra);
+    }
+
+    .busca-caixa:focus-within {
+      border-color: var(--cor-primaria);
+      box-shadow: 0 0 0 2px var(--cor-primaria-suave);
+    }
+
+    .busca-icone {
+      color: var(--cor-texto-sec);
+      flex-shrink: 0;
+    }
+
+    .busca-input {
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      border: none;
+      background: transparent;
+      color: var(--cor-texto);
+      font-family: inherit;
+      font-size: 1.04rem;
+      outline: none;
+    }
+
+    .busca-input:focus,
+    .busca-input:focus-visible {
+      outline: none;
+    }
+
+    .busca-input::-webkit-search-cancel-button {
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .busca-input::placeholder {
+      color: var(--cor-texto-sec);
+    }
+
+    .btn-limpar {
+      border: none;
+      background: transparent;
+      color: var(--cor-texto-sec);
+      padding: 0;
+      display: none;
+    }
+
+    .btn-limpar.visivel {
+      display: inline-flex;
+    }
+
+    .lista-sugestoes {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      z-index: 30;
+      margin: 0;
+      padding: 6px;
+      list-style: none;
+      background-color: var(--cor-superficie);
+      border: 1px solid var(--cor-borda-forte);
+      border-radius: var(--raio);
+      box-shadow: var(--cor-sombra);
+      max-height: 320px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .lista-sugestoes.aberta {
+      display: block;
+    }
+
+    .sugestao-btn {
+      width: 100%;
+      justify-content: space-between;
+      text-align: left;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 500;
+    }
+
+    .sugestao-btn:hover, .sugestao-btn.selecionada {
+      background-color: var(--cor-primaria-suave);
+    }
+
+    .sugestao-principal {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .sugestao-palavra {
+      font-weight: 700;
+      color: var(--cor-texto);
+      font-size: 1.02rem;
+    }
+
+    .sugestao-trad {
+      font-size: 0.9rem;
+      color: var(--cor-texto-sec);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sugestao-pron {
+      font-size: 0.88rem;
+      color: var(--cor-primaria-texto);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    /* Barra compacta de filtros (Tema + Nível) */
+    .filtros-linha {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    /* Faixa discreta da Palavra do dia */
+    .faixa-palavra-dia {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background-color: var(--cor-superficie);
+      border: 1px solid var(--cor-borda);
+      border-radius: 14px;
+      padding: 10px 12px 10px 14px;
+      margin-bottom: 14px;
+    }
+
+    .pdd-info {
+      min-width: 0;
+    }
+
+    .pdd-rotulo {
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--cor-primaria);
+    }
+
+    .pdd-linha {
+      margin: 2px 0 0;
+      font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pdd-acoes {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* Card principal */
+    .card-palavra, .card-painel {
+      background-color: var(--cor-superficie);
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio);
+      padding: 18px;
+      box-shadow: var(--cor-sombra);
+      margin-bottom: 16px;
+    }
+
+    .card-topo {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .palavra-titulo {
+      margin: 0;
+      font-size: 2rem;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      word-break: break-word;
+    }
+
+    .meta-inline {
+      margin: 4px 0 0;
+      font-size: 0.92rem;
+      color: var(--cor-texto-sec);
+      font-weight: 500;
+    }
+
+    .badge-revisar {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background-color: var(--cor-erro-fundo);
+      color: var(--cor-erro-texto);
+      flex-shrink: 0;
+    }
+
+    .linha-pronuncia {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      margin-bottom: 16px;
+      padding: 5px 11px;
+      border-radius: 8px;
+      background-color: var(--cor-primaria-suave);
+      color: var(--cor-primaria-texto);
+      font-size: 0.98rem;
+      font-weight: 600;
+    }
+
+    .acoes-palavra {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .btn-salvar[aria-pressed="true"] {
+      background-color: var(--cor-salvo-fundo);
+      border-color: var(--cor-salvo-borda);
+      color: var(--cor-salvo-texto);
+    }
+
+    /* Alerta discreto e claro de falso cognato */
+    .alerta-falso-cognato {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background-color: var(--cor-alerta-fundo);
+      border-left: 4px solid var(--cor-alerta-borda);
+      color: var(--cor-alerta-texto);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+    }
+
+    .alerta-falso-cognato strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.96rem;
+    }
+
+    .secao-card {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--cor-borda);
+    }
+
+    .secao-titulo {
+      margin: 0 0 8px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--cor-texto-sec);
+      font-weight: 700;
+    }
+
+    .lista-traducoes {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 1.12rem;
+      font-weight: 600;
+    }
+
+    .lista-traducoes li + li {
+      margin-top: 4px;
+      font-weight: 500;
+      color: var(--cor-texto-sec);
+    }
+
+    .info-formas {
+      margin: 0;
+      font-size: 0.98rem;
+      line-height: 1.7;
+    }
+
+    .info-formas em {
+      font-style: normal;
+      font-weight: 700;
+      background-color: var(--cor-primaria-suave);
+      color: var(--cor-primaria-texto);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .sugestao-vazio {
+      padding: 12px;
+      text-align: center;
+      color: var(--cor-texto-sec);
+      font-size: 0.94rem;
+    }
+
+    .exemplo-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 0;
+    }
+
+    .exemplo-item + .exemplo-item {
+      border-top: 1px solid var(--cor-borda);
+    }
+
+    .exemplo-textos {
+      min-width: 0;
+    }
+
+    .exemplo-en {
+      margin: 0 0 3px;
+      font-size: 1.02rem;
+      font-weight: 600;
+    }
+
+    .exemplo-pt {
+      margin: 0;
+      font-size: 0.94rem;
+      color: var(--cor-texto-sec);
+    }
+
+    .aviso-voz {
+      margin: 8px 0 0;
+      font-size: 0.9rem;
+      color: var(--cor-alerta-texto);
+      background-color: var(--cor-alerta-fundo);
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .aviso-voz.visivel {
+      display: block;
+    }
+
+    /* Lista do vocabulário */
+    .btn-vocabulario-toggle {
+      width: 100%;
+      justify-content: space-between;
+      padding: 12px 16px;
+      margin: 4px 0 10px;
+      background-color: var(--cor-superficie);
+      border: 1px solid var(--cor-borda);
+      border-radius: 14px;
+    }
+
+    .vocabulario-toggle-esq {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--cor-texto);
+    }
+
+    .vocabulario-toggle-dir {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--cor-texto-sec);
+    }
+
+    .vocabulario-chevron {
+      transition: transform 0.18s ease;
+    }
+
+    .btn-vocabulario-toggle[aria-expanded="true"] .vocabulario-chevron {
+      transform: rotate(180deg);
+    }
+
+    .grade-palavras {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    @media (min-width: 520px) {
+      .grade-palavras {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .item-palavra-btn {
+      width: 100%;
+      justify-content: space-between;
+      text-align: left;
+      padding: 11px 14px;
+      background-color: var(--cor-superficie);
+    }
+
+    .item-palavra-btn.ativa {
+      border-color: var(--cor-primaria);
+      background-color: var(--cor-primaria-suave);
+    }
+
+    .item-esquerda {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      gap: 1px;
+    }
+
+    .item-titulo {
+      font-size: 1.04rem;
+      font-weight: 700;
+      color: var(--cor-texto);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .item-sub {
+      font-size: 0.9rem;
+      color: var(--cor-texto-sec);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-direita {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--cor-texto-sec);
+    }
+
+    /* Flashcards e Quiz */
+    .controles-estudo {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    @media (min-width: 520px) {
+      .controles-estudo {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .campo-grupo label {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--cor-texto-sec);
+      margin-bottom: 4px;
+    }
+
+    .flashcard-area {
+      background-color: var(--cor-superficie);
+      border: 1px solid var(--cor-borda-forte);
+      border-radius: var(--raio);
+      padding: 18px;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--cor-sombra);
+      margin-bottom: 12px;
+    }
+
+    .flashcard-topo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 0.88rem;
+      color: var(--cor-texto-sec);
+    }
+
+    .flashcard-frente {
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .flashcard-palavra {
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 6px;
+      word-break: break-word;
+    }
+
+    .flashcard-dica {
+      font-size: 0.94rem;
+      color: var(--cor-texto-sec);
+      margin: 16px 0 0;
+    }
+
+    .flashcard-verso {
+      text-align: left;
+      border-top: 1px solid var(--cor-borda);
+      padding-top: 14px;
+      margin-top: 16px;
+    }
+
+    .flashcard-acoes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-nao-sei {
+      background-color: var(--cor-erro-fundo);
+      border-color: var(--cor-erro-borda);
+      color: var(--cor-erro-texto);
+    }
+
+    .btn-sei {
+      background-color: var(--cor-salvo-fundo);
+      border-color: var(--cor-salvo-borda);
+      color: var(--cor-salvo-texto);
+    }
+
+    .btn-largura-total {
+      width: 100%;
+    }
+
+    .quiz-opcoes {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .quiz-opcao-btn {
+      width: 100%;
+      justify-content: flex-start;
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 1.02rem;
+      line-height: 1.35;
+    }
+
+    .quiz-opcao-btn.correta {
+      background-color: var(--cor-salvo-fundo);
+      border-color: var(--cor-salvo-borda);
+      color: var(--cor-salvo-texto);
+    }
+
+    .quiz-opcao-btn.errada {
+      background-color: var(--cor-erro-fundo);
+      border-color: var(--cor-erro-borda);
+      color: var(--cor-erro-texto);
+    }
+
+    .quiz-feedback {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quiz-feedback.acerto {
+      background-color: var(--cor-salvo-fundo);
+      color: var(--cor-salvo-texto);
+    }
+
+    .quiz-feedback.erro {
+      background-color: var(--cor-erro-fundo);
+      color: var(--cor-erro-texto);
+    }
+
+    .acoes-json {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .status-mensagem {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.94rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      background-color: var(--cor-primaria-suave);
+      color: var(--cor-primaria-texto);
+    }
+
+    .status-mensagem.erro {
+      background-color: var(--cor-erro-fundo);
+      color: var(--cor-erro-texto);
+    }
+
+    .estado-vazio {
+      background-color: var(--cor-superficie);
+      border: 1px dashed var(--cor-borda-forte);
+      border-radius: var(--raio);
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--cor-texto-sec);
+    }
+
+    .oculto {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <main class="app-container">
+    <header class="cabecalho">
+      <div class="marca">
+        <h1>Dicionário EN–PT</h1>
+        <p class="marca-sub">600 palavras essenciais</p>
+      </div>
+      <div class="topo-direita">
+        <div class="pilula-progresso" aria-label="Progresso de estudo">
+          <span class="pilula-item" title="Dias seguidos estudando">
+            <svg class="icone cor-fogo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2c.5 4-3 6-3 10a4 4 0 0 0 8 0c0-2.5-1.5-4.5-2-6 2.5 1.5 4 4.2 4 7a7 7 0 1 1-14 0c0-4.2 3-7.5 7-11Z"/>
+            </svg>
+            <span id="stat-streak">0d</span>
+          </span>
+          <span class="pilula-sep" aria-hidden="true"></span>
+          <span class="pilula-item" title="Palavras estudadas">
+            <span id="stat-estudadas">0/600</span>
+          </span>
+        </div>
+        <button type="button" id="btn-tema" class="btn-icone" aria-label="Alternar tema claro ou escuro" title="Alternar tema"></button>
+      </div>
+    </header>
+
+    <div id="banner-offline" class="banner-offline" role="status">
+      Modo offline ativo. O dicionário e suas revisões continuam funcionando normalmente.
+    </div>
+
+    <!-- Barra de abas (rodapé no mobile, topo no desktop) -->
+    <nav class="abas" aria-label="Navegação principal">
+      <button type="button" id="aba-dicionario" class="aba-btn ativa" aria-pressed="true">
+        <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+        </svg>
+        <span>Dicionário</span>
+      </button>
+      <button type="button" id="aba-flashcards" class="aba-btn" aria-pressed="false">
+        <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="6" width="16" height="14" rx="2"/>
+          <path d="M7 3h13a2 2 0 0 1 2 2v11"/>
+        </svg>
+        <span>Flashcards</span>
+      </button>
+      <button type="button" id="aba-quiz" class="aba-btn" aria-pressed="false">
+        <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>Quiz</span>
+      </button>
+      <button type="button" id="aba-minhas" class="aba-btn" aria-pressed="false">
+        <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+        </svg>
+        <span>Salvas</span>
+      </button>
+    </nav>
+
+    <!-- =============================================================== -->
+    <!-- PAINEL 1: DICIONÁRIO                                            -->
+    <!-- =============================================================== -->
+    <section id="painel-dicionario">
+      <div class="busca-wrapper">
+        <div class="busca-caixa">
+          <svg class="icone busca-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            inputmode="search"
+            enterkeyhint="search"
+            id="campo-busca"
+            class="busca-input"
+            placeholder="Buscar em inglês ou português..."
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+            aria-label="Buscar palavra em inglês ou português"
+            aria-autocomplete="list"
+            aria-controls="lista-sugestoes"
+          >
+          <button type="button" id="btn-limpar-busca" class="btn-limpar btn-icone" aria-label="Limpar busca">
+            <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <ul id="lista-sugestoes" class="lista-sugestoes" role="listbox" aria-label="Sugestões de palavras"></ul>
+      </div>
+
+      <div class="filtros-linha">
+        <select id="select-tema" aria-label="Filtrar por tema"></select>
+        <select id="select-nivel" aria-label="Filtrar por nível">
+          <option value="todos">Todos os níveis</option>
+          <option value="A1">Nível A1</option>
+          <option value="A2">Nível A2</option>
+          <option value="B1">Nível B1</option>
+        </select>
+      </div>
+
+      <div id="card-palavra-dia" class="faixa-palavra-dia"></div>
+
+      <article id="card-detalhe" class="card-palavra" aria-live="polite"></article>
+
+      <button type="button" id="btn-toggle-vocabulario" class="btn-vocabulario-toggle" aria-expanded="false" aria-controls="lista-palavras">
+        <span id="titulo-lista-palavras" class="vocabulario-toggle-esq">Vocabulário (600)</span>
+        <span class="vocabulario-toggle-dir">
+          <span id="texto-toggle-vocabulario">Ver lista</span>
+          <svg class="icone vocabulario-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </span>
+      </button>
+      <div id="lista-palavras" class="grade-palavras oculto"></div>
+    </section>
+
+    <!-- =============================================================== -->
+    <!-- PAINEL 2: FLASHCARDS (REPETIÇÃO ESPAÇADA SIMPLES)               -->
+    <!-- =============================================================== -->
+    <section id="painel-flashcards" class="oculto">
+      <div class="card-painel">
+        <div class="controles-estudo">
+          <div class="campo-grupo">
+            <label for="fc-modo">Conjunto para revisar</label>
+            <select id="fc-modo">
+              <option value="devidas">Devidas hoje (repetição espaçada)</option>
+              <option value="minhas">Minhas palavras salvas</option>
+              <option value="todas">Todas as palavras</option>
+            </select>
+          </div>
+          <div class="campo-grupo">
+            <label for="fc-tema">Filtrar tema</label>
+            <select id="fc-tema"></select>
+          </div>
+        </div>
+        <button type="button" id="btn-fc-reiniciar" class="btn-suave btn-largura-total">
+          <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          Montar nova sessão
+        </button>
+      </div>
+
+      <div id="fc-conteudo"></div>
+    </section>
+
+    <!-- =============================================================== -->
+    <!-- PAINEL 3: QUIZ DE MÚLTIPLA ESCOLHA                              -->
+    <!-- =============================================================== -->
+    <section id="painel-quiz" class="oculto">
+      <div class="card-painel">
+        <div class="controles-estudo">
+          <div class="campo-grupo">
+            <label for="quiz-sentido">Sentido do quiz</label>
+            <select id="quiz-sentido">
+              <option value="en-pt">Inglês → Português</option>
+              <option value="pt-en">Português → Inglês</option>
+              <option value="misto">Misto (nos dois sentidos)</option>
+            </select>
+          </div>
+          <div class="campo-grupo">
+            <label for="quiz-fonte">Palavras do quiz</label>
+            <select id="quiz-fonte"></select>
+          </div>
+        </div>
+        <button type="button" id="btn-iniciar-quiz" class="btn-primario btn-largura-total">
+          Iniciar Quiz (10 perguntas)
+        </button>
+      </div>
+
+      <div id="quiz-conteudo"></div>
+    </section>
+
+    <!-- =============================================================== -->
+    <!-- PAINEL 4: MINHAS PALAVRAS + EXPORTAR / IMPORTAR JSON            -->
+    <!-- =============================================================== -->
+    <section id="painel-minhas" class="oculto">
+      <div class="card-painel">
+        <h2 style="margin:0 0 6px;font-size:1.05rem;">Palavras salvas (<span id="contador-salvas">0</span>)</h2>
+        <p style="margin:0 0 12px;font-size:0.92rem;color:var(--cor-texto-sec);">
+          Exporte sua lista em JSON ou importe de outro aparelho.
+        </p>
+        <div class="acoes-json">
+          <button type="button" id="btn-exportar-json">
+            <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Exportar JSON
+          </button>
+          <button type="button" id="btn-importar-json">
+            <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Importar JSON
+          </button>
+        </div>
+        <input type="file" id="input-importar-json" accept=".json,application/json" class="oculto">
+        <div id="status-json" class="status-mensagem oculto" role="status"></div>
+      </div>
+
+      <div id="lista-minhas-palavras" class="grade-palavras"></div>
+    </section>
+  </main>
+
+  <!-- Carrega o banco de 500 palavras offline -->
+  <script src="palavras.js"></script>
+  <script>
+    // =========================================================================
+    // CONSTANTES, ÍCONES SVG E HELPERS DE STORAGE SEGURO (try/catch em tudo)
+    // =========================================================================
+    const LISTA_PALAVRAS = Array.isArray(window.BANCO_PALAVRAS) || typeof BANCO_PALAVRAS !== "undefined"
+      ? BANCO_PALAVRAS
+      : [];
+
+    const STORAGE_TEMA = "dic_en_pt_tema";
+    const STORAGE_SALVAS = "dic_en_pt_minhas_palavras";
+    const STORAGE_SRS = "dic_en_pt_srs";
+    const STORAGE_PROGRESSO = "dic_en_pt_progresso";
+
+    const TEMAS_DISPONIVEIS = [
+      { id: "todos", label: "Todos os temas" },
+      { id: "viagem", label: "Viagem" },
+      { id: "trabalho", label: "Trabalho" },
+      { id: "comida", label: "Comida" },
+      { id: "tecnologia", label: "Tecnologia" },
+      { id: "emoções", label: "Emoções" },
+      { id: "casa", label: "Casa e Rotina" },
+      { id: "família", label: "Família e Pessoas" },
+      { id: "saúde", label: "Saúde e Corpo" },
+      { id: "compras", label: "Compras e Dinheiro" },
+      { id: "tempo", label: "Tempo e Clima" },
+      { id: "essenciais", label: "Verbos e Conectivos" }
+    ];
+
+    const INTERVALOS_SRS_DIAS = [0, 1, 3, 7, 14, 30];
+
+    // Ícones SVG uniformes para manter o visual limpo sem emojis
+    function iconeSvg(tipo) {
+      const mapas = {
+        volume: '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
+        salvo: '<svg class="icone" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>',
+        salvar: '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>',
+        sol: '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>',
+        lua: '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>',
+        alerta: '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        olho: '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+        certo: '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
+        errado: '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+      };
+      return mapas[tipo] || "";
+    }
+
+    function lerStorage(chave, valorPadrao) {
+      try {
+        const bruto = window.localStorage.getItem(chave);
+        if (bruto === null) return valorPadrao;
+        return JSON.parse(bruto);
+      } catch (erro) {
+        return valorPadrao;
+      }
+    }
+
+    function salvarStorage(chave, valor) {
+      try {
+        window.localStorage.setItem(chave, JSON.stringify(valor));
+        return true;
+      } catch (erro) {
+        return false;
+      }
+    }
+
+    function normalizarTexto(texto) {
+      return String(texto || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+    }
+
+    function escaparHtml(texto) {
+      return String(texto)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function obterDataLocalISO(deslocamentoDias = 0) {
+      const data = new Date();
+      data.setDate(data.getDate() + deslocamentoDias);
+      const ano = data.getFullYear();
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const dia = String(data.getDate()).padStart(2, "0");
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    function embaralharArray(lista) {
+      const copia = lista.slice();
+      for (let i = copia.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copia[i], copia[j]] = [copia[j], copia[i]];
+      }
+      return copia;
+    }
+
+    // =========================================================================
+    // ESTADO DA APLICAÇÃO
+    // =========================================================================
+    const salvasIniciais = lerStorage(STORAGE_SALVAS, []);
+    const srsInicial = lerStorage(STORAGE_SRS, {});
+    const progressoInicial = lerStorage(STORAGE_PROGRESSO, {
+      estudadasIds: [],
+      diasSeguidos: 0,
+      ultimoDia: null
+    });
+
+    const estado = {
+      abaAtiva: "dicionario",
+      temaFiltro: "todos",
+      nivelFiltro: "todos",
+      termoBusca: "",
+      palavraSelecionadaId: LISTA_PALAVRAS[0] ? LISTA_PALAVRAS[0].id : "",
+      minhasPalavras: new Set(
+        Array.isArray(salvasIniciais)
+          ? salvasIniciais.filter((id) => LISTA_PALAVRAS.some((p) => p.id === id))
+          : []
+      ),
+      srs: srsInicial && typeof srsInicial === "object" ? srsInicial : {},
+      progresso: {
+        estudadasIds: new Set(
+          Array.isArray(progressoInicial.estudadasIds) ? progressoInicial.estudadasIds : []
+        ),
+        diasSeguidos: Number(progressoInicial.diasSeguidos) || 0,
+        ultimoDia: progressoInicial.ultimoDia || null
+      },
+      indiceSugestaoAtiva: -1,
+      vozesDisponiveis: [],
+      vocabularioAberto: false,
+      limiteLista: 40,
+      fcFila: [],
+      fcVirado: false,
+      fcRespondidasSessao: 0,
+      quizPerguntas: [],
+      quizIndice: 0,
+      quizAcertos: 0,
+      quizErros: [],
+      quizRespondida: false,
+      quizEmAndamento: false
+    };
+
+    // Referências de DOM
+    const elHtml = document.documentElement;
+    const elMetaThemeColor = document.getElementById("meta-theme-color");
+    const elBtnTema = document.getElementById("btn-tema");
+    const elStatStreak = document.getElementById("stat-streak");
+    const elStatEstudadas = document.getElementById("stat-estudadas");
+    const elBannerOffline = document.getElementById("banner-offline");
+
+    const elAbaDicionario = document.getElementById("aba-dicionario");
+    const elAbaFlashcards = document.getElementById("aba-flashcards");
+    const elAbaQuiz = document.getElementById("aba-quiz");
+    const elAbaMinhas = document.getElementById("aba-minhas");
+    const elContadorDevidas = document.getElementById("contador-devidas");
+    const elContadorSalvas = document.getElementById("contador-salvas");
+
+    const elPainelDicionario = document.getElementById("painel-dicionario");
+    const elPainelFlashcards = document.getElementById("painel-flashcards");
+    const elPainelQuiz = document.getElementById("painel-quiz");
+    const elPainelMinhas = document.getElementById("painel-minhas");
+
+    const elCardPalavraDia = document.getElementById("card-palavra-dia");
+    const elCampoBusca = document.getElementById("campo-busca");
+    const elBtnLimparBusca = document.getElementById("btn-limpar-busca");
+    const elListaSugestoes = document.getElementById("lista-sugestoes");
+    const elSelectTema = document.getElementById("select-tema");
+    const elSelectNivel = document.getElementById("select-nivel");
+    const elCardDetalhe = document.getElementById("card-detalhe");
+    const elBtnToggleVocabulario = document.getElementById("btn-toggle-vocabulario");
+    const elTextoToggleVocabulario = document.getElementById("texto-toggle-vocabulario");
+    const elTituloLista = document.getElementById("titulo-lista-palavras");
+    const elListaPalavras = document.getElementById("lista-palavras");
+
+    const elFcModo = document.getElementById("fc-modo");
+    const elFcTema = document.getElementById("fc-tema");
+    const elBtnFcReiniciar = document.getElementById("btn-fc-reiniciar");
+    const elFcConteudo = document.getElementById("fc-conteudo");
+
+    const elQuizSentido = document.getElementById("quiz-sentido");
+    const elQuizFonte = document.getElementById("quiz-fonte");
+    const elBtnIniciarQuiz = document.getElementById("btn-iniciar-quiz");
+    const elQuizConteudo = document.getElementById("quiz-conteudo");
+
+    const elBtnExportarJson = document.getElementById("btn-exportar-json");
+    const elBtnImportarJson = document.getElementById("btn-importar-json");
+    const elInputImportarJson = document.getElementById("input-importar-json");
+    const elStatusJson = document.getElementById("status-json");
+    const elListaMinhas = document.getElementById("lista-minhas-palavras");
+
+    // =========================================================================
+    // TEMA CLARO E ESCURO
+    // =========================================================================
+    function obterTemaEfetivo() {
+      const salvo = lerStorage(STORAGE_TEMA, null);
+      if (salvo === "light" || salvo === "dark") return salvo;
+      const prefereEscuro = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      return prefereEscuro ? "dark" : "light";
+    }
+
+    function aplicarTema(temaManual) {
+      if (temaManual === "light" || temaManual === "dark") {
+        elHtml.setAttribute("data-tema", temaManual);
+      } else {
+        elHtml.removeAttribute("data-tema");
+      }
+
+      const efetivo = temaManual || obterTemaEfetivo();
+      elBtnTema.innerHTML = efetivo === "dark" ? iconeSvg("sol") : iconeSvg("lua");
+      elBtnTema.setAttribute(
+        "aria-label",
+        efetivo === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"
+      );
+      elBtnTema.setAttribute(
+        "title",
+        efetivo === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"
+      );
+      if (elMetaThemeColor) {
+        elMetaThemeColor.setAttribute("content", efetivo === "dark" ? "#0b1120" : "#f6f7f9");
+      }
+    }
+
+    function alternarTema() {
+      const atual = obterTemaEfetivo();
+      const proximo = atual === "dark" ? "light" : "dark";
+      salvarStorage(STORAGE_TEMA, proximo);
+      aplicarTema(proximo);
+    }
+
+    // =========================================================================
+    // PRONÚNCIA COM SPEECHSYNTHESIS (en-US ou en-GB)
+    // =========================================================================
+    function atualizarVozes() {
+      if (!("speechSynthesis" in window)) return;
+      estado.vozesDisponiveis = window.speechSynthesis.getVoices() || [];
+    }
+
+    function escolherVozIngles() {
+      const vozes = estado.vozesDisponiveis.length
+        ? estado.vozesDisponiveis
+        : (("speechSynthesis" in window && window.speechSynthesis.getVoices()) || []);
+
+      return (
+        vozes.find((v) => v.lang && v.lang.toLowerCase() === "en-us") ||
+        vozes.find((v) => v.lang && v.lang.toLowerCase() === "en-gb") ||
+        vozes.find((v) => v.lang && v.lang.toLowerCase().startsWith("en-us")) ||
+        vozes.find((v) => v.lang && v.lang.toLowerCase().startsWith("en-gb")) ||
+        vozes.find((v) => v.lang && v.lang.toLowerCase().startsWith("en")) ||
+        null
+      );
+    }
+
+    function falarTexto(texto, elementoAviso) {
+      if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
+        if (elementoAviso) {
+          elementoAviso.textContent = "Este navegador não suporta leitura de voz (speechSynthesis).";
+          elementoAviso.classList.add("visivel");
+        }
+        return;
+      }
+
+      try {
+        window.speechSynthesis.cancel();
+        const fala = new SpeechSynthesisUtterance(texto);
+        const voz = escolherVozIngles();
+        if (voz) {
+          fala.voice = voz;
+          fala.lang = voz.lang;
+        } else {
+          fala.lang = "en-US";
+        }
+        fala.rate = 0.92;
+        if (elementoAviso) elementoAviso.classList.remove("visivel");
+        window.speechSynthesis.speak(fala);
+      } catch (erro) {
+        if (elementoAviso) {
+          elementoAviso.textContent = "Não foi possível reproduzir o áudio neste dispositivo.";
+          elementoAviso.classList.add("visivel");
+        }
+      }
+    }
+
+    // =========================================================================
+    // PROGRESSO, STREAK E PALAVRA DO DIA
+    // =========================================================================
+    function calcularStreakAtual() {
+      const hoje = obterDataLocalISO(0);
+      const ontem = obterDataLocalISO(-1);
+      if (estado.progresso.ultimoDia === hoje || estado.progresso.ultimoDia === ontem) {
+        return estado.progresso.diasSeguidos;
+      }
+      return 0;
+    }
+
+    function registrarEstudo(palavraId) {
+      if (palavraId) {
+        estado.progresso.estudadasIds.add(palavraId);
+      }
+
+      const hoje = obterDataLocalISO(0);
+      const ontem = obterDataLocalISO(-1);
+
+      if (estado.progresso.ultimoDia !== hoje) {
+        if (estado.progresso.ultimoDia === ontem) {
+          estado.progresso.diasSeguidos += 1;
+        } else {
+          estado.progresso.diasSeguidos = 1;
+        }
+        estado.progresso.ultimoDia = hoje;
+      }
+
+      salvarStorage(STORAGE_PROGRESSO, {
+        estudadasIds: Array.from(estado.progresso.estudadasIds),
+        diasSeguidos: estado.progresso.diasSeguidos,
+        ultimoDia: estado.progresso.ultimoDia
+      });
+
+      renderizarBarraProgresso();
+    }
+
+    function renderizarBarraProgresso() {
+      const dias = calcularStreakAtual();
+      elStatStreak.textContent = `${dias}d`;
+      elStatEstudadas.textContent = `${estado.progresso.estudadasIds.size}/${LISTA_PALAVRAS.length}`;
+      if (elContadorDevidas) {
+        const devidas = obterPalavrasDevidas().length;
+        elContadorDevidas.textContent = devidas > 0 ? `(${devidas})` : "";
+      }
+    }
+
+    function obterPalavraDoDia() {
+      const hoje = obterDataLocalISO(0);
+      let hash = 0;
+      for (let i = 0; i < hoje.length; i++) {
+        hash = (hash * 31 + hoje.charCodeAt(i)) % LISTA_PALAVRAS.length;
+      }
+      return LISTA_PALAVRAS[hash];
+    }
+
+    function renderizarPalavraDoDia() {
+      const item = obterPalavraDoDia();
+      if (!item) return;
+      const dataFormatada = new Date().toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit"
+      });
+
+      elCardPalavraDia.innerHTML = `
+        <div class="pdd-info">
+          <span class="pdd-rotulo">Palavra do dia · ${escaparHtml(dataFormatada)}</span>
+          <p class="pdd-linha">
+            <strong>${escaparHtml(item.palavra)}</strong>
+            <span style="color:var(--cor-primaria-texto);font-weight:600;">(${escaparHtml(item.pronuncia || item.ipa)})</span>
+            · <span style="color:var(--cor-texto-sec);">${escaparHtml(item.traducoes[0])}</span>
+          </p>
+        </div>
+        <div class="pdd-acoes">
+          <button type="button" id="btn-pdd-ouvir" class="btn-icone btn-suave" aria-label="Ouvir palavra do dia">
+            ${iconeSvg("volume")}
+          </button>
+          <button type="button" id="btn-pdd-abrir" class="btn-suave">Abrir</button>
+        </div>
+      `;
+
+      document.getElementById("btn-pdd-ouvir").addEventListener("click", () => {
+        falarTexto(item.palavra, null);
+      });
+      document.getElementById("btn-pdd-abrir").addEventListener("click", () => {
+        selecionarPalavra(item.id, true);
+      });
+    }
+
+    // =========================================================================
+    // POPULAR SELETORES DE TEMA
+    // =========================================================================
+    function popularSeletoresTema() {
+      const opcoesDicionario = TEMAS_DISPONIVEIS.map((t) => {
+        const qtd =
+          t.id === "todos"
+            ? LISTA_PALAVRAS.length
+            : LISTA_PALAVRAS.filter((p) => p.tema === t.id).length;
+        return `<option value="${escaparHtml(t.id)}">${escaparHtml(t.label)} (${qtd})</option>`;
+      }).join("");
+      elSelectTema.innerHTML = opcoesDicionario;
+      elFcTema.innerHTML = opcoesDicionario;
+
+      const opcoesQuiz = [
+        `<option value="todas">Todas as palavras (${LISTA_PALAVRAS.length})</option>`,
+        ...TEMAS_DISPONIVEIS.filter((t) => t.id !== "todos").map((t) => {
+          const qtd = LISTA_PALAVRAS.filter((p) => p.tema === t.id).length;
+          return `<option value="${escaparHtml(t.id)}">Tema: ${escaparHtml(t.label)} (${qtd})</option>`;
+        }),
+        `<option value="minhas">Minhas palavras salvas</option>`
+      ].join("");
+      elQuizFonte.innerHTML = opcoesQuiz;
+    }
+
+    // =========================================================================
+    // SELETORES CUSTOMIZADOS (MENU DROPDOWN NO ESTILO DO APLICATIVO)
+    // =========================================================================
+    const selectsCustomizados = new Map();
+
+    function fecharTodosSelects(excetoSelect = null) {
+      for (const [selectEl, ui] of selectsCustomizados.entries()) {
+        if (selectEl !== excetoSelect) {
+          ui.menu.classList.remove("aberto");
+          ui.trigger.setAttribute("aria-expanded", "false");
+        }
+      }
+    }
+
+    function sincronizarSelectCustomizado(selectEl) {
+      const ui = selectsCustomizados.get(selectEl);
+      if (!ui) return;
+
+      const opcaoAtual = selectEl.options[selectEl.selectedIndex];
+      ui.label.textContent = opcaoAtual ? opcaoAtual.textContent : "";
+
+      ui.menu.innerHTML = Array.from(selectEl.options)
+        .map((opt) => {
+          const ativa = opt.value === selectEl.value;
+          return `
+            <li role="option" aria-selected="${ativa}">
+              <button type="button" class="select-opcao ${ativa ? "ativa" : ""}" data-val="${escaparHtml(opt.value)}">
+                <span>${escaparHtml(opt.textContent)}</span>
+                ${ativa ? `<span style="color:var(--cor-primaria);display:inline-flex;">${iconeSvg("certo")}</span>` : ""}
+              </button>
+            </li>
+          `;
+        })
+        .join("");
+    }
+
+    function criarSelectCustomizado(selectEl, alinharDireita = false) {
+      if (!selectEl || selectsCustomizados.has(selectEl)) return;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = alinharDireita ? "select-custom alinhar-direita" : "select-custom";
+
+      const trigger = document.createElement("button");
+      trigger.type = "button";
+      trigger.className = "select-trigger";
+      trigger.setAttribute("aria-haspopup", "listbox");
+      trigger.setAttribute("aria-expanded", "false");
+      if (selectEl.getAttribute("aria-label")) {
+        trigger.setAttribute("aria-label", selectEl.getAttribute("aria-label"));
+      }
+
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "select-trigger-texto";
+
+      const chevron = document.createElement("span");
+      chevron.className = "select-chevron";
+      chevron.style.display = "inline-flex";
+      chevron.innerHTML =
+        '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>';
+
+      trigger.appendChild(labelSpan);
+      trigger.appendChild(chevron);
+
+      const menu = document.createElement("ul");
+      menu.className = "select-menu";
+      menu.setAttribute("role", "listbox");
+
+      selectEl.classList.add("select-nativo-oculto");
+      selectEl.parentNode.insertBefore(wrapper, selectEl);
+      wrapper.appendChild(trigger);
+      wrapper.appendChild(menu);
+      wrapper.appendChild(selectEl);
+
+      selectsCustomizados.set(selectEl, { wrapper, trigger, label: labelSpan, menu });
+      sincronizarSelectCustomizado(selectEl);
+
+      trigger.addEventListener("click", (evento) => {
+        evento.stopPropagation();
+        const aberto = menu.classList.contains("aberto");
+        fecharSugestoes();
+        fecharTodosSelects(aberto ? null : selectEl);
+        menu.classList.toggle("aberto", !aberto);
+        trigger.setAttribute("aria-expanded", String(!aberto));
+      });
+
+      menu.addEventListener("click", (evento) => {
+        const btn = evento.target.closest(".select-opcao");
+        if (!btn) return;
+        const val = btn.getAttribute("data-val");
+        if (val !== null && selectEl.value !== val) {
+          selectEl.value = val;
+          selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        sincronizarSelectCustomizado(selectEl);
+        fecharTodosSelects();
+        trigger.focus();
+      });
+
+      selectEl.addEventListener("change", () => sincronizarSelectCustomizado(selectEl));
+    }
+
+    function inicializarSelectsCustomizados() {
+      criarSelectCustomizado(elSelectTema, false);
+      criarSelectCustomizado(elSelectNivel, true);
+      criarSelectCustomizado(elFcModo, false);
+      criarSelectCustomizado(elFcTema, false);
+      criarSelectCustomizado(elQuizSentido, false);
+      criarSelectCustomizado(elQuizFonte, false);
+    }
+
+    // =========================================================================
+    // BUSCA E SUGESTÕES (INGLÊS E PORTUGUÊS)
+    // =========================================================================
+    function buscarPalavras(termo) {
+      const consulta = normalizarTexto(termo);
+      if (!consulta) return [];
+
+      const pontuadas = [];
+      for (const item of LISTA_PALAVRAS) {
+        const en = normalizarTexto(item.palavra);
+        const trads = item.traducoes.map(normalizarTexto);
+        const plural = item.plural ? normalizarTexto(item.plural) : "";
+        const pass = item.formasIrregulares ? normalizarTexto(item.formasIrregulares.passado) : "";
+        const part = item.formasIrregulares ? normalizarTexto(item.formasIrregulares.participio) : "";
+
+        let peso = 0;
+        if (en === consulta || trads.some((t) => t === consulta)) {
+          peso = 100;
+        } else if (en.startsWith(consulta) || trads.some((t) => t.startsWith(consulta))) {
+          peso = 70;
+        } else if (
+          en.includes(consulta) ||
+          trads.some((t) => t.includes(consulta)) ||
+          plural === consulta ||
+          pass === consulta ||
+          part === consulta
+        ) {
+          peso = 40;
+        }
+
+        if (peso > 0) {
+          pontuadas.push({ item, peso });
+        }
+      }
+
+      pontuadas.sort((a, b) => b.peso - a.peso || a.item.palavra.localeCompare(b.item.palavra));
+      return pontuadas.map((p) => p.item);
+    }
+
+    function renderizarSugestoes() {
+      const termo = estado.termoBusca.trim();
+      if (!termo) {
+        elListaSugestoes.innerHTML = "";
+        elListaSugestoes.classList.remove("aberta");
+        estado.indiceSugestaoAtiva = -1;
+        return;
+      }
+
+      const resultados = buscarPalavras(termo).slice(0, 8);
+      if (resultados.length === 0) {
+        elListaSugestoes.innerHTML =
+          '<li class="sugestao-vazio">Nenhuma palavra encontrada.</li>';
+        elListaSugestoes.classList.add("aberta");
+        estado.indiceSugestaoAtiva = -1;
+        return;
+      }
+
+      elListaSugestoes.innerHTML = resultados
+        .map((item, idx) => {
+          const ativa = idx === estado.indiceSugestaoAtiva ? "selecionada" : "";
+          return `
+            <li role="option" aria-selected="${idx === estado.indiceSugestaoAtiva}">
+              <button type="button" class="sugestao-btn ${ativa}" data-id="${escaparHtml(item.id)}">
+                <span class="sugestao-principal">
+                  <span class="sugestao-palavra">${escaparHtml(item.palavra)}</span>
+                  <span class="sugestao-trad">${escaparHtml(item.traducoes.join(", "))}</span>
+                </span>
+                <span class="sugestao-pron">${escaparHtml(item.pronuncia || item.ipa)}</span>
+              </button>
+            </li>
+          `;
+        })
+        .join("");
+
+      elListaSugestoes.classList.add("aberta");
+    }
+
+    function fecharSugestoes() {
+      elListaSugestoes.classList.remove("aberta");
+      estado.indiceSugestaoAtiva = -1;
+    }
+
+    // =========================================================================
+    // CARD DE DETALHE E LISTA DO VOCABULÁRIO
+    // =========================================================================
+    function renderizarCardDetalhe() {
+      const item =
+        LISTA_PALAVRAS.find((p) => p.id === estado.palavraSelecionadaId) || LISTA_PALAVRAS[0];
+      if (!item) return;
+
+      const estaSalva = estado.minhasPalavras.has(item.id);
+      const badgeRevisar = item.revisar
+        ? '<span class="badge-revisar">Em revisão</span>'
+        : "";
+
+      const blocoFalsoCognato = item.falsoCognato
+        ? `
+          <div class="alerta-falso-cognato" role="alert">
+            ${iconeSvg("alerta")}
+            <div>
+              <strong>Falso cognato — atenção</strong>
+              <span>${escaparHtml(item.falsoCognato)}</span>
+            </div>
+          </div>
+        `
+        : "";
+
+      let textoFormas = "";
+      if (item.classe === "substantivo" && item.plural) {
+        textoFormas = `<p class="info-formas"><strong>Plural:</strong> ${escaparHtml(item.plural)}</p>`;
+      } else if (item.classe === "verbo") {
+        if (item.formasIrregulares) {
+          textoFormas = `<p class="info-formas"><strong>Verbo irregular:</strong> Passado: <em>${escaparHtml(
+            item.formasIrregulares.passado
+          )}</em> · Particípio: <em>${escaparHtml(item.formasIrregulares.participio)}</em></p>`;
+        } else {
+          textoFormas = `<p class="info-formas"><strong>Flexão:</strong> Verbo regular (-ed no passado)</p>`;
+        }
+      }
+
+      const secaoFormas = textoFormas
+        ? `
+          <div class="secao-card">
+            <h3 class="secao-titulo">Formas da palavra</h3>
+            ${textoFormas}
+          </div>
+        `
+        : "";
+
+      const htmlExemplos = item.exemplos
+        .map(
+          (ex, idx) => `
+          <div class="exemplo-item">
+            <div class="exemplo-textos">
+              <p class="exemplo-en">${escaparHtml(ex.en)}</p>
+              <p class="exemplo-pt">${escaparHtml(ex.pt)}</p>
+            </div>
+            <button
+              type="button"
+              class="btn-icone btn-suave"
+              data-falar-exemplo="${idx}"
+              aria-label="Ouvir frase de exemplo ${idx + 1}"
+              title="Ouvir frase"
+            >
+              ${iconeSvg("volume")}
+            </button>
+          </div>
+        `
+        )
+        .join("");
+
+      elCardDetalhe.innerHTML = `
+        <div class="card-topo">
+          <div>
+            <h2 class="palavra-titulo">${escaparHtml(item.palavra)}</h2>
+            <p class="meta-inline">${escaparHtml(item.classe)} · ${escaparHtml(item.nivel)} · ${escaparHtml(item.tema)}</p>
+          </div>
+          ${badgeRevisar}
+        </div>
+
+        <div class="linha-pronuncia">
+          Como ler: ${escaparHtml(item.pronuncia || item.ipa)}
+        </div>
+
+        <div class="acoes-palavra">
+          <button type="button" id="btn-ouvir-palavra" class="btn-primario">
+            ${iconeSvg("volume")}
+            <span>Ouvir</span>
+          </button>
+          <button
+            type="button"
+            id="btn-salvar-palavra"
+            class="btn-salvar"
+            aria-pressed="${estaSalva}"
+          >
+            ${estaSalva ? iconeSvg("salvo") : iconeSvg("salvar")}
+            <span>${estaSalva ? "Salva" : "Salvar"}</span>
+          </button>
+        </div>
+
+        <p id="aviso-voz" class="aviso-voz" role="status"></p>
+
+        ${blocoFalsoCognato}
+
+        <div class="secao-card" style="margin-top:0;padding-top:0;border-top:none;">
+          <h3 class="secao-titulo">Traduções</h3>
+          <ol class="lista-traducoes">
+            ${item.traducoes.map((t) => `<li>${escaparHtml(t)}</li>`).join("")}
+          </ol>
+        </div>
+
+        ${secaoFormas}
+
+        <div class="secao-card">
+          <h3 class="secao-titulo">Exemplos</h3>
+          ${htmlExemplos}
+        </div>
+      `;
+
+      const avisoVoz = document.getElementById("aviso-voz");
+      document.getElementById("btn-ouvir-palavra").addEventListener("click", () => {
+        falarTexto(item.palavra, avisoVoz);
+      });
+
+      document.getElementById("btn-salvar-palavra").addEventListener("click", () => {
+        alternarSalvarPalavra(item.id);
+      });
+
+      elCardDetalhe.querySelectorAll("[data-falar-exemplo]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.getAttribute("data-falar-exemplo"));
+          const exemplo = item.exemplos[idx];
+          if (exemplo) falarTexto(exemplo.en, avisoVoz);
+        });
+      });
+    }
+
+    function obterPalavrasVisiveis() {
+      const termo = estado.termoBusca.trim();
+      const base = termo ? buscarPalavras(termo) : LISTA_PALAVRAS;
+      return base.filter((item) => {
+        const okTema = estado.temaFiltro === "todos" || item.tema === estado.temaFiltro;
+        const okNivel = estado.nivelFiltro === "todos" || item.nivel === estado.nivelFiltro;
+        return okTema && okNivel;
+      });
+    }
+
+    function renderizarListaPalavras() {
+      const lista = obterPalavrasVisiveis();
+      elTituloLista.textContent = `Vocabulário (${lista.length})`;
+      elBtnToggleVocabulario.setAttribute("aria-expanded", String(estado.vocabularioAberto));
+      elTextoToggleVocabulario.textContent = estado.vocabularioAberto ? "Ocultar" : "Ver lista";
+      elListaPalavras.classList.toggle("oculto", !estado.vocabularioAberto);
+
+      if (!estado.vocabularioAberto) return;
+
+      if (lista.length === 0) {
+        elListaPalavras.innerHTML =
+          '<div class="estado-vazio" style="grid-column:1/-1;">Nenhuma palavra corresponde à busca ou ao filtro selecionado.</div>';
+        return;
+      }
+
+      const visiveis = lista.slice(0, estado.limiteLista);
+      const botoesHtml = visiveis
+        .map((item) => {
+          const ativa = item.id === estado.palavraSelecionadaId ? "ativa" : "";
+          const salva = estado.minhasPalavras.has(item.id);
+          return `
+            <button type="button" class="item-palavra-btn ${ativa}" data-id="${escaparHtml(item.id)}">
+              <span class="item-esquerda">
+                <span class="item-titulo">
+                  ${salva ? `<span style="color:var(--cor-salvo-texto);display:inline-flex;">${iconeSvg("salvo")}</span>` : ""}
+                  ${escaparHtml(item.palavra)}
+                </span>
+                <span class="item-sub">${escaparHtml(item.traducoes.join(", "))}</span>
+              </span>
+              <span class="item-direita">${escaparHtml(item.nivel)}</span>
+            </button>
+          `;
+        })
+        .join("");
+
+      const restante = lista.length - visiveis.length;
+      const botaoMaisHtml =
+        restante > 0
+          ? `<button type="button" id="btn-mostrar-mais" class="btn-suave" style="grid-column:1/-1;">Mostrar mais (${restante} restantes)</button>`
+          : "";
+
+      elListaPalavras.innerHTML = botoesHtml + botaoMaisHtml;
+    }
+
+    function renderizarMinhasPalavras() {
+      const salvas = LISTA_PALAVRAS.filter((p) => estado.minhasPalavras.has(p.id));
+      if (elContadorSalvas) {
+        elContadorSalvas.textContent = String(salvas.length);
+      }
+
+      if (salvas.length === 0) {
+        elListaMinhas.innerHTML = `
+          <div class="estado-vazio" style="grid-column:1/-1;">
+            <p style="margin:0 0 6px;font-weight:700;color:var(--cor-texto);">Nenhuma palavra salva ainda</p>
+            <p style="margin:0;">Abra uma palavra no Dicionário e toque em <strong>Salvar</strong> para montar sua lista.</p>
+          </div>
+        `;
+        return;
+      }
+
+      elListaMinhas.innerHTML = salvas
+        .map(
+          (item) => `
+          <button type="button" class="item-palavra-btn" data-id="${escaparHtml(item.id)}">
+            <span class="item-esquerda">
+              <span class="item-titulo">${escaparHtml(item.palavra)}</span>
+              <span class="item-sub">${escaparHtml(item.traducoes.join(", "))}</span>
+            </span>
+            <span class="item-direita">${escaparHtml(item.tema)}</span>
+          </button>
+        `
+        )
+        .join("");
+    }
+
+    function selecionarPalavra(id, irParaDicionario = false) {
+      if (!LISTA_PALAVRAS.some((p) => p.id === id)) return;
+      estado.palavraSelecionadaId = id;
+      if (irParaDicionario) {
+        trocarAba("dicionario");
+      }
+      renderizarCardDetalhe();
+      renderizarListaPalavras();
+      fecharSugestoes();
+      elCardDetalhe.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function alternarSalvarPalavra(id) {
+      if (estado.minhasPalavras.has(id)) {
+        estado.minhasPalavras.delete(id);
+      } else {
+        estado.minhasPalavras.add(id);
+      }
+      salvarStorage(STORAGE_SALVAS, Array.from(estado.minhasPalavras));
+      renderizarCardDetalhe();
+      renderizarListaPalavras();
+      renderizarMinhasPalavras();
+    }
+
+    // =========================================================================
+    // FLASHCARDS COM REPETIÇÃO ESPAÇADA SIMPLES
+    // =========================================================================
+    function obterPalavrasDevidas(tema = "todos") {
+      const agora = Date.now();
+      return LISTA_PALAVRAS.filter((item) => {
+        if (tema !== "todos" && item.tema !== tema) return false;
+        const registro = estado.srs[item.id];
+        if (!registro) return true;
+        return Number(registro.proximaRevisao || 0) <= agora;
+      });
+    }
+
+    function iniciarSessaoFlashcards() {
+      const modo = elFcModo.value;
+      const tema = elFcTema.value;
+      let base = [];
+
+      if (modo === "devidas") {
+        base = obterPalavrasDevidas(tema);
+      } else if (modo === "minhas") {
+        base = LISTA_PALAVRAS.filter(
+          (p) => estado.minhasPalavras.has(p.id) && (tema === "todos" || p.tema === tema)
+        );
+      } else {
+        base = LISTA_PALAVRAS.filter((p) => tema === "todos" || p.tema === tema);
+      }
+
+      const ordenadas = embaralharArray(base).sort((a, b) => {
+        const na = estado.srs[a.id] ? estado.srs[a.id].nivel : 1;
+        const nb = estado.srs[b.id] ? estado.srs[b.id].nivel : 1;
+        return na - nb;
+      });
+
+      estado.fcFila = ordenadas.slice(0, 20);
+      estado.fcVirado = false;
+      estado.fcRespondidasSessao = 0;
+      renderizarFlashcards();
+    }
+
+    function responderFlashcard(acertou) {
+      if (estado.fcFila.length === 0) return;
+      const atual = estado.fcFila.shift();
+      const prev = estado.srs[atual.id] || { nivel: 0, acertos: 0, erros: 0 };
+
+      if (acertou) {
+        const novoNivel = Math.min(5, (prev.nivel || 0) + 1);
+        const dias = INTERVALOS_SRS_DIAS[novoNivel];
+        estado.srs[atual.id] = {
+          nivel: novoNivel,
+          proximaRevisao: Date.now() + dias * 24 * 60 * 60 * 1000,
+          acertos: (prev.acertos || 0) + 1,
+          erros: prev.erros || 0
+        };
+      } else {
+        estado.srs[atual.id] = {
+          nivel: 0,
+          proximaRevisao: Date.now() + 60 * 1000,
+          acertos: prev.acertos || 0,
+          erros: (prev.erros || 0) + 1
+        };
+        const posicaoRetorno = Math.min(2, estado.fcFila.length);
+        estado.fcFila.splice(posicaoRetorno, 0, atual);
+      }
+
+      salvarStorage(STORAGE_SRS, estado.srs);
+      registrarEstudo(atual.id);
+      estado.fcRespondidasSessao += 1;
+      estado.fcVirado = false;
+      renderizarFlashcards();
+    }
+
+    function renderizarFlashcards() {
+      if (estado.fcFila.length === 0) {
+        const modo = elFcModo.value;
+        const msg =
+          estado.fcRespondidasSessao > 0
+            ? `Você concluiu ${estado.fcRespondidasSessao} revisões nesta sessão.`
+            : modo === "minhas" && estado.minhasPalavras.size === 0
+              ? "Salve algumas palavras no Dicionário primeiro ou escolha outro conjunto acima."
+              : "Nenhuma palavra pendente neste filtro agora.";
+
+        elFcConteudo.innerHTML = `
+          <div class="estado-vazio">
+            <p style="margin:0 0 8px;font-size:1.08rem;font-weight:800;color:var(--cor-texto);">
+              ${estado.fcRespondidasSessao > 0 ? "Sessão concluída" : "Tudo em dia por aqui"}
+            </p>
+            <p style="margin:0 0 16px;">${escaparHtml(msg)}</p>
+            <button type="button" id="btn-fc-estudar-todas" class="btn-primario">
+              Estudar palavras deste tema
+            </button>
+          </div>
+        `;
+
+        document.getElementById("btn-fc-estudar-todas").addEventListener("click", () => {
+          elFcModo.value = "todas";
+          sincronizarSelectCustomizado(elFcModo);
+          iniciarSessaoFlashcards();
+        });
+        return;
+      }
+
+      const item = estado.fcFila[0];
+      const reg = estado.srs[item.id];
+      const infoNivel = reg ? `Nível ${reg.nivel}/5` : "Nova";
+
+      const blocoCognato = item.falsoCognato
+        ? `<div class="alerta-falso-cognato" style="margin-top:12px;">${iconeSvg("alerta")}<div><strong>Falso cognato</strong><span>${escaparHtml(
+            item.falsoCognato
+          )}</span></div></div>`
+        : "";
+
+      const versoHtml = estado.fcVirado
+        ? `
+          <div class="flashcard-verso">
+            <p class="secao-titulo">Traduções</p>
+            <ol class="lista-traducoes" style="margin-bottom:10px;">
+              ${item.traducoes.map((t) => `<li>${escaparHtml(t)}</li>`).join("")}
+            </ol>
+            ${
+              item.plural
+                ? `<p class="info-formas" style="margin-bottom:8px;"><strong>Plural:</strong> ${escaparHtml(item.plural)}</p>`
+                : ""
+            }
+            ${
+              item.formasIrregulares
+                ? `<p class="info-formas" style="margin-bottom:8px;"><strong>Irregular:</strong> ${escaparHtml(
+                    item.formasIrregulares.passado
+                  )} / ${escaparHtml(item.formasIrregulares.participio)}</p>`
+                : ""
+            }
+            ${blocoCognato}
+            <div class="exemplo-item" style="border-top:1px solid var(--cor-borda);margin-top:10px;">
+              <div class="exemplo-textos">
+                <p class="exemplo-en">${escaparHtml(item.exemplos[0].en)}</p>
+                <p class="exemplo-pt">${escaparHtml(item.exemplos[0].pt)}</p>
+              </div>
+            </div>
+          </div>
+        `
+        : '<p class="flashcard-dica">Tente lembrar o significado e toque em <strong>Virar cartão</strong>.</p>';
+
+      const botoesHtml = estado.fcVirado
+        ? `
+          <div class="flashcard-acoes">
+            <button type="button" id="btn-fc-nao-sei" class="btn-nao-sei">
+              ${iconeSvg("errado")}
+              <span>Não sei</span>
+            </button>
+            <button type="button" id="btn-fc-sei" class="btn-sei">
+              ${iconeSvg("certo")}
+              <span>Sei</span>
+            </button>
+          </div>
+        `
+        : `
+          <button type="button" id="btn-fc-virar" class="btn-primario btn-largura-total">
+            ${iconeSvg("olho")}
+            <span>Virar cartão</span>
+          </button>
+        `;
+
+      elFcConteudo.innerHTML = `
+        <div class="flashcard-area">
+          <div class="flashcard-topo">
+            <span>Restantes: <strong>${estado.fcFila.length}</strong></span>
+            <span>${escaparHtml(item.tema)} · ${escaparHtml(infoNivel)}</span>
+          </div>
+
+          <div class="flashcard-frente">
+            <p class="flashcard-palavra">${escaparHtml(item.palavra)}</p>
+            <p class="meta-inline" style="margin:0 0 10px;">${escaparHtml(item.classe)}</p>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+              <span class="linha-pronuncia" style="margin:0;">Como ler: ${escaparHtml(item.pronuncia || item.ipa)}</span>
+              <button type="button" id="btn-fc-ouvir" class="btn-icone btn-suave" aria-label="Ouvir pronúncia">
+                ${iconeSvg("volume")}
+              </button>
+            </div>
+            ${versoHtml}
+          </div>
+        </div>
+        ${botoesHtml}
+      `;
+
+      document.getElementById("btn-fc-ouvir").addEventListener("click", () => {
+        falarTexto(item.palavra, null);
+      });
+
+      if (estado.fcVirado) {
+        document.getElementById("btn-fc-nao-sei").addEventListener("click", () => {
+          responderFlashcard(false);
+        });
+        document.getElementById("btn-fc-sei").addEventListener("click", () => {
+          responderFlashcard(true);
+        });
+      } else {
+        document.getElementById("btn-fc-virar").addEventListener("click", () => {
+          estado.fcVirado = true;
+          renderizarFlashcards();
+        });
+      }
+    }
+
+    // =========================================================================
+    // QUIZ DE MÚLTIPLA ESCOLHA (EN→PT e PT→EN)
+    // =========================================================================
+    function iniciarQuiz() {
+      const fonte = elQuizFonte.value;
+      const sentidoSelecionado = elQuizSentido.value;
+
+      let pool = [];
+      if (fonte === "minhas") {
+        pool = LISTA_PALAVRAS.filter((p) => estado.minhasPalavras.has(p.id));
+      } else if (fonte === "todas") {
+        pool = LISTA_PALAVRAS.slice();
+      } else {
+        pool = LISTA_PALAVRAS.filter((p) => p.tema === fonte);
+      }
+
+      if (pool.length < 4) {
+        elQuizConteudo.innerHTML = `
+          <div class="estado-vazio">
+            <p style="margin:0 0 6px;font-weight:700;color:var(--cor-texto);">Poucas palavras disponíveis</p>
+            <p style="margin:0;">O quiz precisa de pelo menos <strong>4 palavras</strong> nesta seleção. Salve mais palavras ou escolha outro filtro.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const sorteadas = embaralharArray(pool).slice(0, 10);
+      estado.quizPerguntas = sorteadas.map((item) => {
+        const sentido =
+          sentidoSelecionado === "misto"
+            ? Math.random() < 0.5
+              ? "en-pt"
+              : "pt-en"
+            : sentidoSelecionado;
+
+        const respostaCerta =
+          sentido === "en-pt" ? item.traducoes.join(", ") : item.palavra;
+
+        const candidatos = embaralharArray(
+          LISTA_PALAVRAS.filter((outro) => {
+            if (outro.id === item.id) return false;
+            const textoOutro =
+              sentido === "en-pt" ? outro.traducoes.join(", ") : outro.palavra;
+            return normalizarTexto(textoOutro) !== normalizarTexto(respostaCerta);
+          })
+        );
+
+        const opcoesTexto = [respostaCerta];
+        for (const cand of candidatos) {
+          const txt = sentido === "en-pt" ? cand.traducoes.join(", ") : cand.palavra;
+          if (!opcoesTexto.includes(txt)) {
+            opcoesTexto.push(txt);
+          }
+          if (opcoesTexto.length === 4) break;
+        }
+
+        return {
+          item,
+          sentido,
+          respostaCerta,
+          opcoes: embaralharArray(opcoesTexto),
+          escolhida: null
+        };
+      });
+
+      estado.quizIndice = 0;
+      estado.quizAcertos = 0;
+      estado.quizErros = [];
+      estado.quizRespondida = false;
+      estado.quizEmAndamento = true;
+      renderizarQuiz();
+    }
+
+    function responderQuiz(opcaoEscolhida) {
+      if (estado.quizRespondida) return;
+      const atual = estado.quizPerguntas[estado.quizIndice];
+      atual.escolhida = opcaoEscolhida;
+      estado.quizRespondida = true;
+
+      const acertou = opcaoEscolhida === atual.respostaCerta;
+      if (acertou) {
+        estado.quizAcertos += 1;
+      } else {
+        estado.quizErros.push(atual.item);
+      }
+
+      registrarEstudo(atual.item.id);
+      renderizarQuiz();
+    }
+
+    function renderizarQuiz() {
+      if (!estado.quizEmAndamento) {
+        elQuizConteudo.innerHTML = `
+          <div class="estado-vazio">
+            <p style="margin:0 0 6px;font-weight:700;color:var(--cor-texto);">Pronto para praticar?</p>
+            <p style="margin:0;">Escolha o sentido e toque em <strong>Iniciar Quiz</strong> acima.</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (estado.quizIndice >= estado.quizPerguntas.length) {
+        const total = estado.quizPerguntas.length;
+        const pct = Math.round((estado.quizAcertos / total) * 100);
+        const listaErrosHtml = estado.quizErros.length
+          ? `
+            <div class="secao-card" style="text-align:left;">
+              <h3 class="secao-titulo">Para revisar (${estado.quizErros.length})</h3>
+              <div class="grade-palavras">
+                ${estado.quizErros
+                  .map(
+                    (it) => `
+                  <button type="button" class="item-palavra-btn" data-abrir-erro="${escaparHtml(it.id)}">
+                    <span class="item-esquerda">
+                      <span class="item-titulo">${escaparHtml(it.palavra)}</span>
+                      <span class="item-sub">${escaparHtml(it.traducoes.join(", "))}</span>
+                    </span>
+                    <span class="item-direita">Abrir</span>
+                  </button>
+                `
+                  )
+                  .join("")}
+              </div>
+            </div>
+          `
+          : '<p style="margin:10px 0 0;font-weight:700;color:var(--cor-salvo-texto);">Excelente! Você acertou todas.</p>';
+
+        elQuizConteudo.innerHTML = `
+          <div class="card-painel" style="text-align:center;">
+            <h2 style="margin:0 0 6px;">Resultado do Quiz</h2>
+            <p style="font-size:2rem;font-weight:800;margin:8px 0;color:var(--cor-primaria);">
+              ${estado.quizAcertos} / ${total} (${pct}%)
+            </p>
+            ${listaErrosHtml}
+            <button type="button" id="btn-novo-quiz" class="btn-primario btn-largura-total" style="margin-top:16px;">
+              Jogar novamente
+            </button>
+          </div>
+        `;
+
+        document.getElementById("btn-novo-quiz").addEventListener("click", iniciarQuiz);
+        elQuizConteudo.querySelectorAll("[data-abrir-erro]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            selecionarPalavra(btn.getAttribute("data-abrir-erro"), true);
+          });
+        });
+        return;
+      }
+
+      const q = estado.quizPerguntas[estado.quizIndice];
+      const eEnPt = q.sentido === "en-pt";
+      const enunciado = eEnPt ? q.item.palavra : q.item.traducoes.join(", ");
+      const rotuloSentido = eEnPt ? "Inglês → Português" : "Português → Inglês";
+
+      let feedbackHtml = "";
+      if (estado.quizRespondida) {
+        const acertou = q.escolhida === q.respostaCerta;
+        const avisoCognato = q.item.falsoCognato
+          ? `<div class="alerta-falso-cognato" style="margin-top:10px;">${iconeSvg("alerta")}<div><strong>Falso cognato</strong><span>${escaparHtml(
+              q.item.falsoCognato
+            )}</span></div></div>`
+          : "";
+
+        feedbackHtml = `
+          <div class="quiz-feedback ${acertou ? "acerto" : "erro"}" role="status">
+            ${acertou ? iconeSvg("certo") : iconeSvg("errado")}
+            <span>
+              ${
+                acertou
+                  ? "Resposta correta!"
+                  : `Resposta certa: ${escaparHtml(q.respostaCerta)}`
+              }
+            </span>
+          </div>
+          ${avisoCognato}
+          <button type="button" id="btn-quiz-proxima" class="btn-primario btn-largura-total" style="margin-top:12px;">
+            ${
+              estado.quizIndice + 1 < estado.quizPerguntas.length
+                ? "Próxima pergunta"
+                : "Ver resultado final"
+            }
+          </button>
+        `;
+      }
+
+      elQuizConteudo.innerHTML = `
+        <div class="card-painel">
+          <div class="flashcard-topo">
+            <span>Pergunta <strong>${estado.quizIndice + 1}</strong> de ${estado.quizPerguntas.length}</span>
+            <span>${escaparHtml(rotuloSentido)}</span>
+          </div>
+
+          <p class="secao-titulo" style="margin-bottom:4px;">
+            ${eEnPt ? "Qual é a tradução em português?" : "Como se diz em inglês?"}
+          </p>
+          <p class="palavra-titulo" style="font-size:1.75rem;margin:4px 0 8px;">
+            ${escaparHtml(enunciado)}
+          </p>
+          ${
+            eEnPt
+              ? `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+                   <span class="linha-pronuncia" style="margin:0;">Como ler: ${escaparHtml(q.item.pronuncia || q.item.ipa)}</span>
+                   <button type="button" id="btn-quiz-ouvir" class="btn-suave">
+                     ${iconeSvg("volume")}
+                     <span>Ouvir</span>
+                   </button>
+                 </div>`
+              : `<p class="meta-inline" style="margin:0 0 6px;">Classe: ${escaparHtml(q.item.classe)}</p>`
+          }
+
+          <div class="quiz-opcoes">
+            ${q.opcoes
+              .map((op) => {
+                let classeExtra = "";
+                if (estado.quizRespondida) {
+                  if (op === q.respostaCerta) classeExtra = "correta";
+                  else if (op === q.escolhida) classeExtra = "errada";
+                }
+                return `
+                  <button
+                    type="button"
+                    class="quiz-opcao-btn ${classeExtra}"
+                    data-opcao="${escaparHtml(op)}"
+                    ${estado.quizRespondida ? "disabled" : ""}
+                  >
+                    ${escaparHtml(op)}
+                  </button>
+                `;
+              })
+              .join("")}
+          </div>
+
+          ${feedbackHtml}
+        </div>
+      `;
+
+      const btnQuizOuvir = document.getElementById("btn-quiz-ouvir");
+      if (btnQuizOuvir) {
+        btnQuizOuvir.addEventListener("click", () => falarTexto(q.item.palavra, null));
+      }
+
+      elQuizConteudo.querySelectorAll("[data-opcao]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          responderQuiz(btn.getAttribute("data-opcao"));
+        });
+      });
+
+      const btnProxima = document.getElementById("btn-quiz-proxima");
+      if (btnProxima) {
+        btnProxima.addEventListener("click", () => {
+          estado.quizIndice += 1;
+          estado.quizRespondida = false;
+          renderizarQuiz();
+        });
+      }
+    }
+
+    // =========================================================================
+    // EXPORTAR / IMPORTAR "MINHAS PALAVRAS" EM JSON
+    // =========================================================================
+    function mostrarStatusJson(mensagem, ehErro = false) {
+      elStatusJson.textContent = mensagem;
+      elStatusJson.classList.toggle("erro", ehErro);
+      elStatusJson.classList.remove("oculto");
+    }
+
+    function exportarMinhasPalavrasJson() {
+      const listaIds = Array.from(estado.minhasPalavras);
+      if (listaIds.length === 0) {
+        mostrarStatusJson("Você ainda não salvou nenhuma palavra para exportar.", true);
+        return;
+      }
+
+      const payload = {
+        app: "dicionario-en-pt",
+        versao: 1,
+        exportadoEm: new Date().toISOString(),
+        minhasPalavras: listaIds
+      };
+
+      try {
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json"
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "minhas-palavras-en-pt.json";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        mostrarStatusJson(`${listaIds.length} palavras exportadas para JSON.`);
+      } catch (erro) {
+        mostrarStatusJson("Não foi possível gerar o arquivo JSON neste navegador.", true);
+      }
+    }
+
+    function importarMinhasPalavrasJson(arquivo) {
+      if (!arquivo) return;
+      const leitor = new FileReader();
+      leitor.onload = () => {
+        try {
+          const dados = JSON.parse(String(leitor.result || ""));
+          const listaBruta = Array.isArray(dados)
+            ? dados
+            : dados && Array.isArray(dados.minhasPalavras)
+              ? dados.minhasPalavras
+              : null;
+
+          if (!listaBruta) {
+            mostrarStatusJson("Arquivo JSON inválido: campo 'minhasPalavras' não encontrado.", true);
+            return;
+          }
+
+          const idsValidos = new Set(LISTA_PALAVRAS.map((p) => p.id));
+          let adicionadas = 0;
+          for (const id of listaBruta) {
+            if (typeof id === "string" && idsValidos.has(id) && !estado.minhasPalavras.has(id)) {
+              estado.minhasPalavras.add(id);
+              adicionadas += 1;
+            }
+          }
+
+          salvarStorage(STORAGE_SALVAS, Array.from(estado.minhasPalavras));
+          renderizarCardDetalhe();
+          renderizarListaPalavras();
+          renderizarMinhasPalavras();
+          mostrarStatusJson(
+            adicionadas > 0
+              ? `${adicionadas} nova(s) palavra(s) importada(s). Total salvo: ${estado.minhasPalavras.size}.`
+              : `Importação concluída. Todas as palavras válidas já estavam salvas (${estado.minhasPalavras.size}).`
+          );
+        } catch (erro) {
+          mostrarStatusJson("Não foi possível ler o arquivo JSON. Verifique o formato.", true);
+        } finally {
+          elInputImportarJson.value = "";
+        }
+      };
+      leitor.onerror = () => {
+        mostrarStatusJson("Erro ao tentar abrir o arquivo selecionado.", true);
+      };
+      leitor.readAsText(arquivo);
+    }
+
+    // =========================================================================
+    // NAVEGAÇÃO ENTRE ABAS E EVENTOS GERAIS
+    // =========================================================================
+    function trocarAba(nomeAba) {
+      estado.abaAtiva = nomeAba;
+      const abas = [
+        { nome: "dicionario", btn: elAbaDicionario, painel: elPainelDicionario },
+        { nome: "flashcards", btn: elAbaFlashcards, painel: elPainelFlashcards },
+        { nome: "quiz", btn: elAbaQuiz, painel: elPainelQuiz },
+        { nome: "minhas", btn: elAbaMinhas, painel: elPainelMinhas }
+      ];
+
+      for (const item of abas) {
+        const ativa = item.nome === nomeAba;
+        item.btn.classList.toggle("ativa", ativa);
+        item.btn.setAttribute("aria-pressed", String(ativa));
+        item.painel.classList.toggle("oculto", !ativa);
+      }
+
+      if (nomeAba === "flashcards" && estado.fcFila.length === 0 && estado.fcRespondidasSessao === 0) {
+        iniciarSessaoFlashcards();
+      }
+      if (nomeAba === "quiz" && !estado.quizEmAndamento) {
+        renderizarQuiz();
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function atualizarStatusOffline() {
+      elBannerOffline.classList.toggle("visivel", !navigator.onLine);
+    }
+
+    elBtnTema.addEventListener("click", alternarTema);
+    elAbaDicionario.addEventListener("click", () => trocarAba("dicionario"));
+    elAbaFlashcards.addEventListener("click", () => trocarAba("flashcards"));
+    elAbaQuiz.addEventListener("click", () => trocarAba("quiz"));
+    elAbaMinhas.addEventListener("click", () => trocarAba("minhas"));
+
+    elCampoBusca.addEventListener("input", () => {
+      estado.termoBusca = elCampoBusca.value;
+      elBtnLimparBusca.classList.toggle("visivel", estado.termoBusca.length > 0);
+      estado.indiceSugestaoAtiva = -1;
+      estado.limiteLista = 40;
+      if (estado.termoBusca.trim().length > 0) {
+        estado.vocabularioAberto = true;
+      }
+      renderizarSugestoes();
+      renderizarListaPalavras();
+    });
+
+    elCampoBusca.addEventListener("keydown", (evento) => {
+      const botoes = elListaSugestoes.querySelectorAll(".sugestao-btn");
+      if (evento.key === "ArrowDown" && botoes.length > 0) {
+        evento.preventDefault();
+        estado.indiceSugestaoAtiva = (estado.indiceSugestaoAtiva + 1) % botoes.length;
+        renderizarSugestoes();
+      } else if (evento.key === "ArrowUp" && botoes.length > 0) {
+        evento.preventDefault();
+        estado.indiceSugestaoAtiva =
+          (estado.indiceSugestaoAtiva - 1 + botoes.length) % botoes.length;
+        renderizarSugestoes();
+      } else if (evento.key === "Enter") {
+        if (botoes.length > 0) {
+          evento.preventDefault();
+          const alvo =
+            estado.indiceSugestaoAtiva >= 0 ? botoes[estado.indiceSugestaoAtiva] : botoes[0];
+          const id = alvo.getAttribute("data-id");
+          if (id) selecionarPalavra(id);
+        }
+      } else if (evento.key === "Escape") {
+        fecharSugestoes();
+      }
+    });
+
+    elBtnLimparBusca.addEventListener("click", () => {
+      elCampoBusca.value = "";
+      estado.termoBusca = "";
+      elBtnLimparBusca.classList.remove("visivel");
+      fecharSugestoes();
+      renderizarListaPalavras();
+      elCampoBusca.focus();
+    });
+
+    elListaSugestoes.addEventListener("click", (evento) => {
+      const btn = evento.target.closest(".sugestao-btn");
+      if (!btn) return;
+      const id = btn.getAttribute("data-id");
+      if (id) selecionarPalavra(id);
+    });
+
+    document.addEventListener("click", (evento) => {
+      if (!evento.target.closest(".busca-wrapper")) {
+        fecharSugestoes();
+      }
+      if (!evento.target.closest(".select-custom")) {
+        fecharTodosSelects();
+      }
+    });
+
+    document.addEventListener("keydown", (evento) => {
+      if (evento.key === "Escape") {
+        fecharTodosSelects();
+      }
+    });
+
+    elSelectTema.addEventListener("change", () => {
+      estado.temaFiltro = elSelectTema.value || "todos";
+      estado.limiteLista = 40;
+      if (estado.temaFiltro !== "todos") {
+        estado.vocabularioAberto = true;
+      }
+      renderizarListaPalavras();
+    });
+
+    elSelectNivel.addEventListener("change", () => {
+      estado.nivelFiltro = elSelectNivel.value || "todos";
+      estado.limiteLista = 40;
+      if (estado.nivelFiltro !== "todos") {
+        estado.vocabularioAberto = true;
+      }
+      renderizarListaPalavras();
+    });
+
+    elBtnToggleVocabulario.addEventListener("click", () => {
+      estado.vocabularioAberto = !estado.vocabularioAberto;
+      renderizarListaPalavras();
+    });
+
+    elListaPalavras.addEventListener("click", (evento) => {
+      if (evento.target.closest("#btn-mostrar-mais")) {
+        estado.limiteLista += 40;
+        renderizarListaPalavras();
+        return;
+      }
+      const btn = evento.target.closest("[data-id]");
+      if (!btn) return;
+      selecionarPalavra(btn.getAttribute("data-id"));
+    });
+
+    elListaMinhas.addEventListener("click", (evento) => {
+      const btn = evento.target.closest("[data-id]");
+      if (!btn) return;
+      selecionarPalavra(btn.getAttribute("data-id"), true);
+    });
+
+    elBtnFcReiniciar.addEventListener("click", iniciarSessaoFlashcards);
+    elFcModo.addEventListener("change", iniciarSessaoFlashcards);
+    elFcTema.addEventListener("change", iniciarSessaoFlashcards);
+
+    elBtnIniciarQuiz.addEventListener("click", iniciarQuiz);
+
+    elBtnExportarJson.addEventListener("click", exportarMinhasPalavrasJson);
+    elBtnImportarJson.addEventListener("click", () => elInputImportarJson.click());
+    elInputImportarJson.addEventListener("change", (evento) => {
+      const arquivo = evento.target.files && evento.target.files[0];
+      importarMinhasPalavrasJson(arquivo);
+    });
+
+    window.addEventListener("online", atualizarStatusOffline);
+    window.addEventListener("offline", atualizarStatusOffline);
+
+    if ("speechSynthesis" in window) {
+      atualizarVozes();
+      window.speechSynthesis.addEventListener("voiceschanged", atualizarVozes);
+    }
+
+    if (window.matchMedia) {
+      const mediaEscuro = window.matchMedia("(prefers-color-scheme: dark)");
+      mediaEscuro.addEventListener("change", () => {
+        if (!lerStorage(STORAGE_TEMA, null)) aplicarTema(null);
+      });
+    }
+
+    // Registra o Service Worker para funcionamento offline (requer HTTP/HTTPS)
+    if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {
+          // Falha silenciosa caso o ambiente não permita Service Worker
+        });
+      });
+    }
+
+    // Inicialização
+    popularSeletoresTema();
+    inicializarSelectsCustomizados();
+    aplicarTema(lerStorage(STORAGE_TEMA, null));
+    atualizarStatusOffline();
+    renderizarBarraProgresso();
+    renderizarPalavraDoDia();
+    renderizarCardDetalhe();
+    renderizarListaPalavras();
+    renderizarMinhasPalavras();
+  </script>
+</body>
+</html>
