@@ -398,6 +398,17 @@
     }
 
     /* Barra de navegação: fixa no rodapé no celular, no topo em telas largas */
+    .topo-safe-area {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: env(safe-area-inset-top, 0px);
+      background-color: var(--cor-fundo);
+      z-index: 50;
+      pointer-events: none;
+    }
+
     .abas {
       position: fixed;
       bottom: 0;
@@ -408,9 +419,7 @@
       grid-template-columns: repeat(4, 1fr);
       gap: 4px;
       padding: 6px 10px calc(8px + env(safe-area-inset-bottom, 0px));
-      background-color: var(--cor-nav-fundo);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background-color: var(--cor-superficie);
       border-top: 1px solid var(--cor-borda);
     }
 
@@ -1093,6 +1102,7 @@
   </style>
 </head>
 <body>
+  <div class="topo-safe-area" aria-hidden="true"></div>
   <main class="app-container">
     <header class="cabecalho">
       <div class="marca">
