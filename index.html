@@ -1575,43 +1575,63 @@
     let falaAtual = null;
     let timerFallbackVoz = null;
     const playerAudioFallback = new Audio();
+    playerAudioFallback.preload = "auto";
     const cacheAudioUrl = new Map();
-    let audioDesbloqueadoIOS = false;
+    const requisicoesAudioEmCurso = new Map();
+    let audioCtxDesbloqueado = null;
 
-    function desbloquearAudioIOS() {
-      if (audioDesbloqueadoIOS) return;
-      audioDesbloqueadoIOS = true;
+    function ehDispositivoIOS() {
+      return (
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+      );
+    }
+
+    // Desbloqueia áudio WebAudio e <audio> dentro do gesto de toque no iOS
+    function desbloquearAudioNoToque() {
       try {
-        playerAudioFallback.src =
-          "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-        const prom = playerAudioFallback.play();
-        if (prom && typeof prom.catch === "function") {
-          prom.catch(() => {});
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          if (!audioCtxDesbloqueado) {
+            audioCtxDesbloqueado = new AudioCtx();
+          }
+          if (audioCtxDesbloqueado.state === "suspended") {
+            audioCtxDesbloqueado.resume().catch(() => {});
+          }
+          const buf = audioCtxDesbloqueado.createBuffer(1, 1, 22050);
+          const src = audioCtxDesbloqueado.createBufferSource();
+          src.buffer = buf;
+          src.connect(audioCtxDesbloqueado.destination);
+          src.start(0);
         }
       } catch (erro) {
-        // Ignora se bloqueado
+        // Ignora
       }
     }
 
-    async function tocarAudioOnlineFallback(texto, elementoAviso) {
-      const palavraLimpa = String(texto || "").trim().toLowerCase();
+    async function buscarUrlAudioPalavra(palavra) {
+      const palavraLimpa = String(palavra || "").trim().toLowerCase();
       if (!navigator.onLine || !palavraLimpa || /\s/.test(palavraLimpa)) {
-        if (elementoAviso) {
-          elementoAviso.textContent =
-            "Sem áudio disponível offline. No iPhone, confira também se a chave lateral de silencioso está desligada.";
-          elementoAviso.classList.add("visivel");
-        }
-        return;
+        return null;
+      }
+      if (cacheAudioUrl.has(palavraLimpa)) {
+        return cacheAudioUrl.get(palavraLimpa);
+      }
+      if (requisicoesAudioEmCurso.has(palavraLimpa)) {
+        return requisicoesAudioEmCurso.get(palavraLimpa);
       }
 
-      try {
-        let audioUrl = cacheAudioUrl.get(palavraLimpa);
-        if (!audioUrl) {
+      const prom = (async () => {
+        try {
           const resp = await fetch(
             `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(palavraLimpa)}`
           );
-          if (!resp.ok) throw new Error("Sem áudio");
+          if (!resp.ok) {
+            cacheAudioUrl.set(palavraLimpa, null);
+            return null;
+          }
           const dados = await resp.json();
+          let audioUrl = null;
           if (Array.isArray(dados)) {
             for (const entrada of dados) {
               const foneticas = Array.isArray(entrada.phonetics) ? entrada.phonetics : [];
@@ -1627,9 +1647,38 @@
               }
             }
           }
-          if (audioUrl) cacheAudioUrl.set(palavraLimpa, audioUrl);
+          cacheAudioUrl.set(palavraLimpa, audioUrl);
+          return audioUrl;
+        } catch (erro) {
+          return null;
+        } finally {
+          requisicoesAudioEmCurso.delete(palavraLimpa);
         }
+      })();
 
+      requisicoesAudioEmCurso.set(palavraLimpa, prom);
+      return prom;
+    }
+
+    // Pré-carrega a URL do áudio antes do clique para tocar sem atraso no iPhone
+    function precarregarAudioPalavra(palavra) {
+      if (!navigator.onLine) return;
+      buscarUrlAudioPalavra(palavra);
+    }
+
+    async function tocarAudioOnlineFallback(texto, elementoAviso) {
+      const palavraLimpa = String(texto || "").trim().toLowerCase();
+      if (!navigator.onLine || !palavraLimpa || /\s/.test(palavraLimpa)) {
+        if (elementoAviso) {
+          elementoAviso.textContent =
+            "No iPhone instalado na tela inicial, verifique se o botão lateral de silencioso está desligado e o volume ligado.";
+          elementoAviso.classList.add("visivel");
+        }
+        return;
+      }
+
+      try {
+        const audioUrl = await buscarUrlAudioPalavra(palavraLimpa);
         if (!audioUrl) throw new Error("Sem URL");
         playerAudioFallback.src = audioUrl;
         playerAudioFallback.currentTime = 0;
@@ -1638,30 +1687,67 @@
       } catch (erro) {
         if (elementoAviso) {
           elementoAviso.textContent =
-            "Não foi possível tocar o áudio. No iPhone, confira se o modo silencioso lateral está desligado.";
+            "Não foi possível tocar o áudio. No iPhone, confira o volume e a chave lateral de silencioso.";
           elementoAviso.classList.add("visivel");
         }
       }
     }
 
     function falarTexto(texto, elementoAviso) {
-      const jaDesbloqueado = audioDesbloqueadoIOS;
-      desbloquearAudioIOS();
-      if (jaDesbloqueado && !playerAudioFallback.paused) {
-        playerAudioFallback.pause();
+      desbloquearAudioNoToque();
+      if (!playerAudioFallback.paused) {
+        try {
+          playerAudioFallback.pause();
+        } catch (erro) {}
       }
       if (timerFallbackVoz) {
         clearTimeout(timerFallbackVoz);
         timerFallbackVoz = null;
       }
 
+      const palavraLimpa = String(texto || "").trim().toLowerCase();
+      const palavraUnica = Boolean(palavraLimpa && !/\s/.test(palavraLimpa));
+      const urlPronta = palavraUnica ? cacheAudioUrl.get(palavraLimpa) : null;
+
+      // No iPhone (especialmente PWA na tela inicial), o speechSynthesis costuma falhar em silêncio:
+      // se o MP3 nativo já estiver em cache, toca imediatamente no mesmo toque do usuário.
+      if (ehDispositivoIOS() && urlPronta) {
+        try {
+          playerAudioFallback.src = urlPronta;
+          playerAudioFallback.currentTime = 0;
+          const prom = playerAudioFallback.play();
+          if (prom && typeof prom.catch === "function") {
+            prom.catch(() => tentarSpeechSynthesis(texto, elementoAviso));
+          }
+          if (elementoAviso) elementoAviso.classList.remove("visivel");
+          return;
+        } catch (erro) {
+          // Segue para speechSynthesis
+        }
+      }
+
+      // No iPhone online sem URL pré-carregada ainda, destrava o player no gesto e busca direto
+      if (ehDispositivoIOS() && palavraUnica && navigator.onLine && !cacheAudioUrl.has(palavraLimpa)) {
+        try {
+          playerAudioFallback.src =
+            "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+          const unlockProm = playerAudioFallback.play();
+          if (unlockProm && typeof unlockProm.catch === "function") unlockProm.catch(() => {});
+        } catch (erro) {}
+        tocarAudioOnlineFallback(texto, elementoAviso);
+        return;
+      }
+
+      tentarSpeechSynthesis(texto, elementoAviso);
+    }
+
+    function tentarSpeechSynthesis(texto, elementoAviso) {
       if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
         tocarAudioOnlineFallback(texto, elementoAviso);
         return;
       }
 
       try {
-        // No iOS, cancelar quando não está falando pode descartar a próxima fala
         if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
           window.speechSynthesis.cancel();
         }
@@ -1671,16 +1757,13 @@
 
         const fala = new SpeechSynthesisUtterance(texto);
         falaAtual = fala;
-        const ehIOS =
-          /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        const ehIOS = ehDispositivoIOS();
         const voz = escolherVozIngles();
 
         if (voz && !ehIOS) {
           fala.voice = voz;
           fala.lang = voz.lang;
         } else {
-          // No iOS, definir apenas lang evita falhas quando getVoices() retorna vozes indisponíveis no PWA
           fala.lang = voz && voz.lang ? voz.lang : "en-US";
         }
         fala.volume = 1;
@@ -1709,7 +1792,6 @@
         window.speechSynthesis.speak(fala);
         window.speechSynthesis.resume();
 
-        // Se o WebKit/iOS PWA travar silenciosamente o speechSynthesis, usa fallback de áudio real
         timerFallbackVoz = setTimeout(() => {
           if (!iniciou && !window.speechSynthesis.speaking) {
             tocarAudioOnlineFallback(texto, elementoAviso);
@@ -1780,6 +1862,7 @@
     function renderizarPalavraDoDia() {
       const item = obterPalavraDoDia();
       if (!item) return;
+      precarregarAudioPalavra(item.palavra);
       const dataFormatada = new Date().toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "2-digit"
@@ -2034,6 +2117,7 @@
       const item =
         LISTA_PALAVRAS.find((p) => p.id === estado.palavraSelecionadaId) || LISTA_PALAVRAS[0];
       if (!item) return;
+      precarregarAudioPalavra(item.palavra);
 
       const estaSalva = estado.minhasPalavras.has(item.id);
       const badgeRevisar = item.revisar
@@ -2374,6 +2458,7 @@
       }
 
       const item = estado.fcFila[0];
+      precarregarAudioPalavra(item.palavra);
       const reg = estado.srs[item.id];
       const infoNivel = reg ? `Nível ${reg.nivel}/5` : "Nova";
 
@@ -2995,6 +3080,14 @@
     // Registra o Service Worker para funcionamento offline (requer HTTP/HTTPS)
     if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
       window.addEventListener("load", () => {
+        const tinhaControlador = Boolean(navigator.serviceWorker.controller);
+        let recarregouPorAtualizacao = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (tinhaControlador && !recarregouPorAtualizacao) {
+            recarregouPorAtualizacao = true;
+            window.location.reload();
+          }
+        });
         navigator.serviceWorker.register("./sw.js").catch(() => {
           // Falha silenciosa caso o ambiente não permita Service Worker
         });
