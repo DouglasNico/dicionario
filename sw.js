@@ -1,5 +1,5 @@
 // Nome e versão do cache para controle de atualizações offline
-const CACHE_NAME = 'dicionario-en-pt-v14';
+const CACHE_NAME = 'dicionario-en-pt-v15';
 
 // Arquivos principais necessários para o app funcionar offline
 const ARQUIVOS_ESSENCIAIS = [

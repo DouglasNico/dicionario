@@ -1573,21 +1573,9 @@
 
     // Referência global evita que o Safari/iOS descarte a fala antes de tocar
     let falaAtual = null;
-    let timerFallbackVoz = null;
-    const playerAudioFallback = new Audio();
-    playerAudioFallback.preload = "auto";
-    const cacheAudioUrl = new Map();
-    const requisicoesAudioEmCurso = new Map();
     let audioCtxDesbloqueado = null;
+    let vozPrimada = false;
 
-    function ehDispositivoIOS() {
-      return (
-        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-      );
-    }
-
-    // Desbloqueia áudio WebAudio e <audio> dentro do gesto de toque no iOS
     function desbloquearAudioNoToque() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -1598,156 +1586,50 @@
           if (audioCtxDesbloqueado.state === "suspended") {
             audioCtxDesbloqueado.resume().catch(() => {});
           }
-          const buf = audioCtxDesbloqueado.createBuffer(1, 1, 22050);
-          const src = audioCtxDesbloqueado.createBufferSource();
-          src.buffer = buf;
-          src.connect(audioCtxDesbloqueado.destination);
-          src.start(0);
         }
       } catch (erro) {
         // Ignora
       }
     }
 
-    async function buscarUrlAudioPalavra(palavra) {
-      const palavraLimpa = String(palavra || "").trim().toLowerCase();
-      if (!navigator.onLine || !palavraLimpa || /\s/.test(palavraLimpa)) {
-        return null;
-      }
-      if (cacheAudioUrl.has(palavraLimpa)) {
-        return cacheAudioUrl.get(palavraLimpa);
-      }
-      if (requisicoesAudioEmCurso.has(palavraLimpa)) {
-        return requisicoesAudioEmCurso.get(palavraLimpa);
-      }
-
-      const prom = (async () => {
-        try {
-          const resp = await fetch(
-            `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(palavraLimpa)}`
-          );
-          if (!resp.ok) {
-            cacheAudioUrl.set(palavraLimpa, null);
-            return null;
-          }
-          const dados = await resp.json();
-          let audioUrl = null;
-          if (Array.isArray(dados)) {
-            for (const entrada of dados) {
-              const foneticas = Array.isArray(entrada.phonetics) ? entrada.phonetics : [];
-              const comAudio =
-                foneticas.find((f) => f.audio && /-us\.mp3$/i.test(f.audio)) ||
-                foneticas.find((f) => f.audio && /-uk\.mp3$/i.test(f.audio)) ||
-                foneticas.find((f) => f.audio);
-              if (comAudio && comAudio.audio) {
-                audioUrl = comAudio.audio.startsWith("//")
-                  ? `https:${comAudio.audio}`
-                  : comAudio.audio;
-                break;
-              }
-            }
-          }
-          cacheAudioUrl.set(palavraLimpa, audioUrl);
-          return audioUrl;
-        } catch (erro) {
-          return null;
-        } finally {
-          requisicoesAudioEmCurso.delete(palavraLimpa);
-        }
-      })();
-
-      requisicoesAudioEmCurso.set(palavraLimpa, prom);
-      return prom;
-    }
-
-    // Pré-carrega a URL do áudio antes do clique para tocar sem atraso no iPhone
-    function precarregarAudioPalavra(palavra) {
-      if (!navigator.onLine) return;
-      buscarUrlAudioPalavra(palavra);
-    }
-
-    async function tocarAudioOnlineFallback(texto, elementoAviso) {
-      const palavraLimpa = String(texto || "").trim().toLowerCase();
-      if (!navigator.onLine || !palavraLimpa || /\s/.test(palavraLimpa)) {
-        if (elementoAviso) {
-          elementoAviso.textContent =
-            "No iPhone instalado na tela inicial, verifique se o botão lateral de silencioso está desligado e o volume ligado.";
-          elementoAviso.classList.add("visivel");
-        }
+    // Pré-aquece as vozes do iOS na primeira interação que não seja botão de áudio
+    function prepararVozesIOS(evento) {
+      if (vozPrimada) return;
+      vozPrimada = true;
+      desbloquearAudioNoToque();
+      if (!("speechSynthesis" in window)) return;
+      atualizarVozes();
+      if (
+        evento &&
+        evento.target &&
+        evento.target.closest &&
+        evento.target.closest("#btn-ouvir-palavra, #btn-fc-ouvir, #btn-quiz-ouvir, #btn-pdd-ouvir, [data-falar-exemplo]")
+      ) {
         return;
       }
-
       try {
-        const audioUrl = await buscarUrlAudioPalavra(palavraLimpa);
-        if (!audioUrl) throw new Error("Sem URL");
-        playerAudioFallback.src = audioUrl;
-        playerAudioFallback.currentTime = 0;
-        await playerAudioFallback.play();
-        if (elementoAviso) elementoAviso.classList.remove("visivel");
+        const silencio = new SpeechSynthesisUtterance(" ");
+        silencio.volume = 0;
+        silencio.lang = "en-US";
+        window.speechSynthesis.speak(silencio);
       } catch (erro) {
-        if (elementoAviso) {
-          elementoAviso.textContent =
-            "Não foi possível tocar o áudio. No iPhone, confira o volume e a chave lateral de silencioso.";
-          elementoAviso.classList.add("visivel");
-        }
+        // Ignora
       }
     }
 
     function falarTexto(texto, elementoAviso) {
       desbloquearAudioNoToque();
-      if (!playerAudioFallback.paused) {
-        try {
-          playerAudioFallback.pause();
-        } catch (erro) {}
-      }
-      if (timerFallbackVoz) {
-        clearTimeout(timerFallbackVoz);
-        timerFallbackVoz = null;
-      }
 
-      const palavraLimpa = String(texto || "").trim().toLowerCase();
-      const palavraUnica = Boolean(palavraLimpa && !/\s/.test(palavraLimpa));
-      const urlPronta = palavraUnica ? cacheAudioUrl.get(palavraLimpa) : null;
-
-      // No iPhone (especialmente PWA na tela inicial), o speechSynthesis costuma falhar em silêncio:
-      // se o MP3 nativo já estiver em cache, toca imediatamente no mesmo toque do usuário.
-      if (ehDispositivoIOS() && urlPronta) {
-        try {
-          playerAudioFallback.src = urlPronta;
-          playerAudioFallback.currentTime = 0;
-          const prom = playerAudioFallback.play();
-          if (prom && typeof prom.catch === "function") {
-            prom.catch(() => tentarSpeechSynthesis(texto, elementoAviso));
-          }
-          if (elementoAviso) elementoAviso.classList.remove("visivel");
-          return;
-        } catch (erro) {
-          // Segue para speechSynthesis
-        }
-      }
-
-      // No iPhone online sem URL pré-carregada ainda, destrava o player no gesto e busca direto
-      if (ehDispositivoIOS() && palavraUnica && navigator.onLine && !cacheAudioUrl.has(palavraLimpa)) {
-        try {
-          playerAudioFallback.src =
-            "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-          const unlockProm = playerAudioFallback.play();
-          if (unlockProm && typeof unlockProm.catch === "function") unlockProm.catch(() => {});
-        } catch (erro) {}
-        tocarAudioOnlineFallback(texto, elementoAviso);
-        return;
-      }
-
-      tentarSpeechSynthesis(texto, elementoAviso);
-    }
-
-    function tentarSpeechSynthesis(texto, elementoAviso) {
       if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
-        tocarAudioOnlineFallback(texto, elementoAviso);
+        if (elementoAviso) {
+          elementoAviso.textContent = "Este navegador não suporta leitura de voz (speechSynthesis).";
+          elementoAviso.classList.add("visivel");
+        }
         return;
       }
 
       try {
+        // Só cancela se já houver fala ativa para não anular a nova no iOS WebKit
         if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
           window.speechSynthesis.cancel();
         }
@@ -1755,50 +1637,44 @@
           window.speechSynthesis.resume();
         }
 
+        atualizarVozes();
         const fala = new SpeechSynthesisUtterance(texto);
         falaAtual = fala;
-        const ehIOS = ehDispositivoIOS();
-        const voz = escolherVozIngles();
 
-        if (voz && !ehIOS) {
+        const voz = escolherVozIngles();
+        if (voz) {
           fala.voice = voz;
           fala.lang = voz.lang;
         } else {
-          fala.lang = voz && voz.lang ? voz.lang : "en-US";
+          fala.lang = "en-US";
         }
         fala.volume = 1;
-        fala.rate = 0.92;
+        fala.rate = 0.94;
+        fala.pitch = 1;
 
-        let iniciou = false;
-        fala.onstart = () => {
-          iniciou = true;
-          if (timerFallbackVoz) {
-            clearTimeout(timerFallbackVoz);
-            timerFallbackVoz = null;
-          }
+        fala.onend = () => {
+          if (falaAtual === fala) falaAtual = null;
         };
-        fala.onerror = () => {
-          if (!iniciou) {
-            iniciou = true;
-            if (timerFallbackVoz) {
-              clearTimeout(timerFallbackVoz);
-              timerFallbackVoz = null;
-            }
-            tocarAudioOnlineFallback(texto, elementoAviso);
+        fala.onerror = (ev) => {
+          if (falaAtual === fala) falaAtual = null;
+          // "canceled" ou "interrupted" acontecem ao trocar de palavra rápido; não são erro real
+          if (ev && (ev.error === "canceled" || ev.error === "interrupted")) return;
+          if (elementoAviso) {
+            const detalhe = ev && ev.error ? ` (${ev.error})` : "";
+            elementoAviso.textContent =
+              `Não foi possível reproduzir a voz neste dispositivo${detalhe}. Se estiver usando o iPhone pela tela inicial, tente abrir pelo Safari.`;
+            elementoAviso.classList.add("visivel");
           }
         };
 
         if (elementoAviso) elementoAviso.classList.remove("visivel");
+        // Chamada síncrona direta dentro do clique para manter permissão de áudio no iOS
         window.speechSynthesis.speak(fala);
-        window.speechSynthesis.resume();
-
-        timerFallbackVoz = setTimeout(() => {
-          if (!iniciou && !window.speechSynthesis.speaking) {
-            tocarAudioOnlineFallback(texto, elementoAviso);
-          }
-        }, 650);
       } catch (erro) {
-        tocarAudioOnlineFallback(texto, elementoAviso);
+        if (elementoAviso) {
+          elementoAviso.textContent = "Não foi possível reproduzir o áudio neste dispositivo.";
+          elementoAviso.classList.add("visivel");
+        }
       }
     }
 
@@ -1862,7 +1738,6 @@
     function renderizarPalavraDoDia() {
       const item = obterPalavraDoDia();
       if (!item) return;
-      precarregarAudioPalavra(item.palavra);
       const dataFormatada = new Date().toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "2-digit"
@@ -2117,7 +1992,6 @@
       const item =
         LISTA_PALAVRAS.find((p) => p.id === estado.palavraSelecionadaId) || LISTA_PALAVRAS[0];
       if (!item) return;
-      precarregarAudioPalavra(item.palavra);
 
       const estaSalva = estado.minhasPalavras.has(item.id);
       const badgeRevisar = item.revisar
@@ -2458,7 +2332,6 @@
       }
 
       const item = estado.fcFila[0];
-      precarregarAudioPalavra(item.palavra);
       const reg = estado.srs[item.id];
       const infoNivel = reg ? `Nível ${reg.nivel}/5` : "Nova";
 
@@ -3068,6 +2941,7 @@
     if ("speechSynthesis" in window) {
       atualizarVozes();
       window.speechSynthesis.addEventListener("voiceschanged", atualizarVozes);
+      document.addEventListener("pointerdown", prepararVozesIOS, { once: true, passive: true });
     }
 
     if (window.matchMedia) {
