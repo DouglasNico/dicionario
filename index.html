@@ -871,14 +871,22 @@
       color: var(--cor-primaria-texto);
     }
 
+    .tradutor-entrada-wrapper {
+      padding: 0 10px 8px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
     .tradutor-campo {
+      flex: 1;
       width: 100%;
-      min-height: 52px;
+      min-height: 44px;
       max-height: 140px;
-      padding: 6px 14px 10px;
+      padding: 6px 0;
       border: none;
       outline: none;
-      resize: vertical;
+      resize: none;
       font-family: inherit;
       font-size: 1.04rem;
       line-height: 1.5;
@@ -898,9 +906,9 @@
     }
 
     .tradutor-resultado-wrapper {
-      padding: 6px 14px 10px;
+      padding: 6px 10px 10px 14px;
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 6px;
     }
 
@@ -923,19 +931,20 @@
 
     .tradutor-resultado-acoes {
       display: flex;
-      flex-direction: column;
-      gap: 2px;
+      align-items: center;
       flex-shrink: 0;
     }
 
+    .tradutor-entrada-wrapper .btn-icone,
     .tradutor-resultado-acoes .btn-icone {
-      width: 36px;
-      height: 36px;
-      min-width: 36px;
-      min-height: 36px;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
       padding: 0;
       border: none;
       background: transparent;
+      flex-shrink: 0;
     }
 
     .tradutor-alternativas {
@@ -1413,16 +1422,21 @@
           </button>
           <span id="tradutor-label-destino" class="tradutor-lang-label">Inglês</span>
         </div>
-        <textarea
-          id="tradutor-entrada"
-          class="tradutor-campo"
-          placeholder="Digite em português..."
-          rows="1"
-          autocomplete="off"
-          autocapitalize="sentences"
-          spellcheck="true"
-          aria-label="Texto para traduzir"
-        ></textarea>
+        <div class="tradutor-entrada-wrapper">
+          <textarea
+            id="tradutor-entrada"
+            class="tradutor-campo"
+            placeholder="Digite em português..."
+            rows="1"
+            autocomplete="off"
+            autocapitalize="sentences"
+            spellcheck="true"
+            aria-label="Texto para traduzir"
+          ></textarea>
+          <button type="button" id="btn-tradutor-ouvir-original" class="btn-icone" style="display:none;" aria-label="Ouvir original" title="Ouvir original">
+            <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          </button>
+        </div>
         <div class="tradutor-divisor"></div>
         <div class="tradutor-cabecalho" style="padding-bottom:0;">
           <span id="tradutor-label-resultado" class="tradutor-lang-label">Inglês</span>
@@ -1430,9 +1444,6 @@
         <div class="tradutor-resultado-wrapper">
           <div id="tradutor-resultado" class="tradutor-resultado placeholder">Tradução aparece aqui...</div>
           <div class="tradutor-resultado-acoes" id="tradutor-acoes" style="display:none;">
-            <button type="button" id="btn-tradutor-ouvir-original" class="btn-icone" aria-label="Ouvir original" title="Ouvir original">
-              <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-            </button>
             <button type="button" id="btn-tradutor-ouvir" class="btn-icone" aria-label="Ouvir tradução" title="Ouvir tradução">
               <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
@@ -3935,6 +3946,9 @@
         clearTimeout(timerDebounce);
         this.style.height = "auto";
         this.style.height = Math.min(this.scrollHeight, 140) + "px";
+        if (elBtnOuvirOriginal) {
+          elBtnOuvirOriginal.style.display = this.value.trim() ? "inline-flex" : "none";
+        }
         timerDebounce = setTimeout(() => traduzir(this.value), 480);
       });
 
@@ -3946,6 +3960,7 @@
             elEntrada.value = textoTraduzido;
             elEntrada.style.height = "auto";
             elEntrada.style.height = Math.min(elEntrada.scrollHeight, 140) + "px";
+            if (elBtnOuvirOriginal) elBtnOuvirOriginal.style.display = "inline-flex";
             traduzir(textoTraduzido);
           } else if (elEntrada.value.trim()) {
             traduzir(elEntrada.value);
