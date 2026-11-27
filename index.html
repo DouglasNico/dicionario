@@ -831,6 +831,108 @@
       display: block;
     }
 
+    /* Tradutor rápido */
+    .tradutor-wrapper {
+      margin: 10px 0;
+      border-radius: 14px;
+      border: 1px solid var(--cor-borda);
+      background-color: var(--cor-superficie);
+      overflow: hidden;
+    }
+
+    .tradutor-cabecalho {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px 6px;
+    }
+
+    .tradutor-lang-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--cor-texto-sec);
+    }
+
+    .tradutor-btn-trocar {
+      min-width: 36px;
+      min-height: 36px;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: var(--cor-primaria-texto);
+    }
+
+    .tradutor-campo {
+      width: 100%;
+      min-height: 52px;
+      max-height: 140px;
+      padding: 6px 14px 10px;
+      border: none;
+      outline: none;
+      resize: vertical;
+      font-family: inherit;
+      font-size: 1.04rem;
+      line-height: 1.5;
+      color: var(--cor-texto);
+      background: transparent;
+    }
+
+    .tradutor-campo::placeholder {
+      color: var(--cor-texto-sec);
+      opacity: 0.65;
+    }
+
+    .tradutor-divisor {
+      height: 1px;
+      background-color: var(--cor-borda);
+      margin: 0 14px;
+    }
+
+    .tradutor-resultado-wrapper {
+      padding: 6px 14px 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .tradutor-resultado {
+      flex: 1;
+      min-height: 28px;
+      font-size: 1.04rem;
+      line-height: 1.5;
+      color: var(--cor-primaria-texto);
+      font-weight: 600;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .tradutor-resultado.placeholder {
+      color: var(--cor-texto-sec);
+      font-weight: 400;
+      opacity: 0.5;
+    }
+
+    .tradutor-resultado-acoes {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .tradutor-resultado-acoes .btn-icone {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
+
     /* Lista do vocabulário */
     .btn-vocabulario-toggle {
       width: 100%;
@@ -1134,7 +1236,7 @@
     <header class="cabecalho">
       <div class="marca">
         <h1>Dicionário EN–PT</h1>
-        <p class="marca-sub">600 palavras essenciais</p>
+        <p class="marca-sub" id="marca-sub-qtd">800 palavras essenciais</p>
       </div>
       <div class="topo-direita">
         <div class="pilula-progresso" aria-label="Progresso de estudo">
@@ -1146,7 +1248,7 @@
           </span>
           <span class="pilula-sep" aria-hidden="true"></span>
           <span class="pilula-item" title="Palavras estudadas">
-            <span id="stat-estudadas">0/600</span>
+            <span id="stat-estudadas">0/800</span>
           </span>
         </div>
         <button type="button" id="btn-tema" class="btn-icone" aria-label="Alternar tema claro ou escuro" title="Alternar tema"></button>
@@ -1236,8 +1338,51 @@
 
       <article id="card-detalhe" class="card-palavra" aria-live="polite"></article>
 
+      <!-- Tradutor rápido inline -->
+      <div id="tradutor-rapido" class="tradutor-wrapper">
+        <div class="tradutor-cabecalho">
+          <span id="tradutor-label-origem" class="tradutor-lang-label">Português</span>
+          <button type="button" id="btn-tradutor-trocar" class="tradutor-btn-trocar" aria-label="Trocar idiomas" title="Trocar idiomas">
+            <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+              <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+            </svg>
+          </button>
+          <span id="tradutor-label-destino" class="tradutor-lang-label">Inglês</span>
+        </div>
+        <textarea
+          id="tradutor-entrada"
+          class="tradutor-campo"
+          placeholder="Digite em português..."
+          rows="1"
+          autocomplete="off"
+          autocapitalize="sentences"
+          spellcheck="true"
+          aria-label="Texto para traduzir"
+        ></textarea>
+        <div class="tradutor-divisor"></div>
+        <div class="tradutor-cabecalho" style="padding-bottom:0;">
+          <span id="tradutor-label-resultado" class="tradutor-lang-label">Inglês</span>
+        </div>
+        <div class="tradutor-resultado-wrapper">
+          <div id="tradutor-resultado" class="tradutor-resultado placeholder">Tradução aparece aqui...</div>
+          <div class="tradutor-resultado-acoes" id="tradutor-acoes" style="display:none;">
+            <button type="button" id="btn-tradutor-ouvir-original" class="btn-icone" aria-label="Ouvir original" title="Ouvir original">
+              <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            </button>
+            <button type="button" id="btn-tradutor-ouvir" class="btn-icone" aria-label="Ouvir tradução" title="Ouvir tradução">
+              <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <button type="button" id="btn-toggle-vocabulario" class="btn-vocabulario-toggle" aria-expanded="false" aria-controls="lista-palavras">
-        <span id="titulo-lista-palavras" class="vocabulario-toggle-esq">Vocabulário (600)</span>
+        <span id="titulo-lista-palavras" class="vocabulario-toggle-esq">Vocabulário (800)</span>
         <span class="vocabulario-toggle-dir">
           <span id="texto-toggle-vocabulario">Ver lista</span>
           <svg class="icone vocabulario-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1341,7 +1486,7 @@
     </section>
   </main>
 
-  <!-- Carrega o banco de 500 palavras offline -->
+  <!-- Carrega o banco de 800 palavras offline -->
   <script src="palavras.js"></script>
   <script>
     // =========================================================================
@@ -1368,7 +1513,8 @@
       { id: "saúde", label: "Saúde e Corpo" },
       { id: "compras", label: "Compras e Dinheiro" },
       { id: "tempo", label: "Tempo e Clima" },
-      { id: "essenciais", label: "Verbos e Conectivos" }
+      { id: "essenciais", label: "Verbos e Conectivos" },
+      { id: "base", label: "Base e Dia a Dia" }
     ];
 
     const INTERVALOS_SRS_DIAS = [0, 1, 3, 7, 14, 30];
@@ -3138,6 +3284,134 @@
         });
       });
     }
+
+    // =========================================================================
+    // TRADUTOR RÁPIDO INLINE
+    // =========================================================================
+    (function inicializarTradutor() {
+      const elEntrada = document.getElementById("tradutor-entrada");
+      const elResultado = document.getElementById("tradutor-resultado");
+      const elAcoes = document.getElementById("tradutor-acoes");
+      const elBtnTrocar = document.getElementById("btn-tradutor-trocar");
+      const elBtnOuvirOriginal = document.getElementById("btn-tradutor-ouvir-original");
+      const elBtnOuvirTraducao = document.getElementById("btn-tradutor-ouvir");
+      const elLabelOrigem = document.getElementById("tradutor-label-origem");
+      const elLabelDestino = document.getElementById("tradutor-label-destino");
+      const elLabelResultado = document.getElementById("tradutor-label-resultado");
+
+      if (!elEntrada || !elResultado) return;
+
+      let direcao = "pt-en"; // pt→en ou en→pt
+      let textoTraduzido = "";
+      let textoOriginal = "";
+      let timerDebounce = null;
+
+      function idiomaOrigem() { return direcao === "pt-en" ? "pt" : "en"; }
+      function idiomaDestino() { return direcao === "pt-en" ? "en" : "pt"; }
+
+      function atualizarLabels() {
+        const nomeOrigem = direcao === "pt-en" ? "Português" : "Inglês";
+        const nomeDestino = direcao === "pt-en" ? "Inglês" : "Português";
+        if (elLabelOrigem) elLabelOrigem.textContent = nomeOrigem;
+        if (elLabelDestino) elLabelDestino.textContent = nomeDestino;
+        if (elLabelResultado) elLabelResultado.textContent = nomeDestino;
+        elEntrada.placeholder = `Digite em ${nomeOrigem.toLowerCase()}...`;
+      }
+
+      function falarTextoIdioma(texto, idioma) {
+        const textoLimpo = String(texto || "").trim();
+        if (!textoLimpo) return;
+        desbloquearAudioNoToque();
+        const token = ++idReproducaoAtual;
+        pararAudioAtual();
+        if (navigator.onLine !== false) {
+          const enc = encodeURIComponent(textoLimpo);
+          const tl = idioma === "pt" ? "pt-BR" : "en";
+          const urls = [
+            `https://translate.google.com/translate_tts?ie=UTF-8&q=${enc}&tl=${tl}&client=tw-ob`,
+            `https://dict.youdao.com/dictvoice?audio=${enc}&type=2`
+          ];
+          tocarListaAudioUrls(urls, 0, token, textoLimpo, null);
+          return;
+        }
+        falarComSpeechSynthesis(textoLimpo, null, token);
+      }
+
+      async function traduzir(texto) {
+        textoOriginal = texto;
+        const limpo = texto.trim();
+        if (!limpo) {
+          elResultado.textContent = "Tradução aparece aqui...";
+          elResultado.classList.add("placeholder");
+          elAcoes.style.display = "none";
+          textoTraduzido = "";
+          return;
+        }
+        elResultado.textContent = "Traduzindo...";
+        elResultado.classList.add("placeholder");
+        try {
+          const sl = idiomaOrigem() === "pt" ? "pt" : "en";
+          const tl = idiomaDestino() === "pt" ? "pt" : "en";
+          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(limpo)}`;
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error("Erro na tradução");
+          const dados = await resp.json();
+          let resultado = "";
+          if (dados && dados[0]) {
+            for (const parte of dados[0]) {
+              if (parte && parte[0]) resultado += parte[0];
+            }
+          }
+          textoTraduzido = resultado || limpo;
+          elResultado.textContent = textoTraduzido;
+          elResultado.classList.remove("placeholder");
+          elAcoes.style.display = "flex";
+        } catch (e) {
+          elResultado.textContent = "Erro ao traduzir. Verifique sua conexão.";
+          elResultado.classList.add("placeholder");
+          textoTraduzido = "";
+          elAcoes.style.display = "none";
+        }
+      }
+
+      elEntrada.addEventListener("input", function () {
+        clearTimeout(timerDebounce);
+        // Auto-resize textarea
+        this.style.height = "auto";
+        this.style.height = Math.min(this.scrollHeight, 140) + "px";
+        timerDebounce = setTimeout(() => traduzir(this.value), 400);
+      });
+
+      if (elBtnTrocar) {
+        elBtnTrocar.addEventListener("click", function () {
+          direcao = direcao === "pt-en" ? "en-pt" : "pt-en";
+          atualizarLabels();
+          // Swap: coloca a tradução como entrada
+          if (textoTraduzido) {
+            elEntrada.value = textoTraduzido;
+            elEntrada.style.height = "auto";
+            elEntrada.style.height = Math.min(elEntrada.scrollHeight, 140) + "px";
+            traduzir(textoTraduzido);
+          } else if (elEntrada.value.trim()) {
+            traduzir(elEntrada.value);
+          }
+        });
+      }
+
+      if (elBtnOuvirOriginal) {
+        elBtnOuvirOriginal.addEventListener("click", function () {
+          falarTextoIdioma(textoOriginal || elEntrada.value, idiomaOrigem());
+        });
+      }
+
+      if (elBtnOuvirTraducao) {
+        elBtnOuvirTraducao.addEventListener("click", function () {
+          falarTextoIdioma(textoTraduzido, idiomaDestino());
+        });
+      }
+
+      atualizarLabels();
+    })();
 
     // Inicialização
     popularSeletoresTema();
