@@ -2,13 +2,18 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Dicionário Inglês–Português para celular com pronúncia, flashcards, quiz e uso offline.">
   <meta name="theme-color" content="#f6f7f9" id="meta-theme-color">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Dicionário EN–PT">
   <title>Dicionário Inglês–Português</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
   <style>
     /* Variáveis de tema claro (padrão editorial limpo) */
     :root {
@@ -112,13 +117,15 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Margem lateral de 16px e espaço inferior para a barra de abas no celular */
+    /* Margem lateral de 16px, proteção para notch/barra do iOS e espaço para abas inferiores */
     .app-container {
       width: 100%;
       max-width: 720px;
       margin: 0 auto;
-      padding: 16px;
-      padding-bottom: 92px;
+      padding-top: calc(14px + env(safe-area-inset-top, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+      padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
     }
 
     .icone {
@@ -398,7 +405,7 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 4px;
-      padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
+      padding: 6px 10px calc(8px + env(safe-area-inset-bottom, 0px));
       background-color: var(--cor-nav-fundo);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);

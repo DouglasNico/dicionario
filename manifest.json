@@ -3,12 +3,12 @@
   "short_name": "Dicionário EN-PT",
   "description": "Dicionário Inglês–Português para estudo no celular, com pronúncia, exemplos e lista de palavras offline.",
   "lang": "pt-BR",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f8fafc",
-  "theme_color": "#2563eb",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
   "icons": [
     {
       "src": "icons/icon-192.png",
