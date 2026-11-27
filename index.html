@@ -9,9 +9,11 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Dicionário EN–PT">
+  <meta name="referrer" content="no-referrer">
   <title>Dicionário Inglês–Português</title>
-  <link rel="preconnect" href="https://translate.google.com" crossorigin>
+  <link rel="preconnect" href="https://clients5.google.com" crossorigin>
   <link rel="preconnect" href="https://translate.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://translate.google.com" crossorigin>
   <link rel="preconnect" href="https://api.dictionaryapi.dev" crossorigin>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -1824,8 +1826,7 @@
     let vozPrimada = false;
     let idReproducaoAtual = 0;
     let timerAudioAtual = null;
-    let audioCacheAtivo = null;
-    const cachePreAudio = new Map();
+    let chaveReprodutorAtual = "";
     const reprodutorAudio = new Audio();
     reprodutorAudio.preload = "auto";
     reprodutorAudio.setAttribute("playsinline", "");
@@ -1834,33 +1835,13 @@
       const textoCodificado = encodeURIComponent(textoLimpo);
       const tl = idioma === "pt" ? "pt-BR" : "en";
       const urls = [
+        `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${textoCodificado}&tl=${tl}&client=gtx`,
         `https://translate.google.com/translate_tts?ie=UTF-8&q=${textoCodificado}&tl=${tl}&client=tw-ob`
       ];
       if (idioma !== "pt") {
         urls.push(`https://dict.youdao.com/dictvoice?audio=${textoCodificado}&type=2`);
       }
       return urls;
-    }
-
-    function precarregarAudio(texto, idioma = "en") {
-      if (navigator.onLine === false) return;
-      const textoLimpo = String(texto || "").trim();
-      if (!textoLimpo) return;
-      const chave = `${idioma}:${textoLimpo.toLowerCase()}`;
-      if (cachePreAudio.has(chave)) return;
-      if (cachePreAudio.size >= 24) {
-        const maisAntiga = cachePreAudio.keys().next().value;
-        cachePreAudio.delete(maisAntiga);
-      }
-      try {
-        const audio = new Audio();
-        audio.preload = "auto";
-        audio.setAttribute("playsinline", "");
-        audio.src = construirUrlsAudio(textoLimpo, idioma)[0];
-        cachePreAudio.set(chave, audio);
-      } catch (erro) {
-        // Ignora falha silenciosa de pré-carregamento
-      }
     }
 
     function ativarSessaoPlayback() {
@@ -1899,15 +1880,6 @@
 
     function pararAudioAtual() {
       limparTimerAudio();
-      if (audioCacheAtivo) {
-        try {
-          if (!audioCacheAtivo.paused) audioCacheAtivo.pause();
-          audioCacheAtivo.currentTime = 0;
-        } catch (erro) {
-          // Ignora
-        }
-        audioCacheAtivo = null;
-      }
       reprodutorAudio.onplaying = null;
       reprodutorAudio.ontimeupdate = null;
       reprodutorAudio.onended = null;
@@ -2069,17 +2041,19 @@
         if (!iniciou && token === idReproducaoAtual) {
           tentarProximo();
         }
-      }, 2200);
+      }, 1800);
 
       try {
         const promessa = reprodutorAudio.play();
         if (promessa && typeof promessa.catch === "function") {
           promessa.catch((erro) => {
             if (erro && erro.name === "AbortError") return;
+            chaveReprodutorAtual = "";
             tentarProximo();
           });
         }
       } catch (erro) {
+        chaveReprodutorAtual = "";
         tentarProximo();
       }
     }
@@ -2093,28 +2067,26 @@
       pararAudioAtual();
       if (elementoAviso) elementoAviso.classList.remove("visivel");
 
-      // Online: Google TTS primeiro (~3x mais rápido que Youdao) + cache local para resposta imediata
+      // Online: Google TTS sem Referer (~200ms) com replay instantâneo para mesma frase
       if (navigator.onLine !== false) {
-        const urls = construirUrlsAudio(textoLimpo, idioma);
         const chave = `${idioma}:${textoLimpo.toLowerCase()}`;
-        const emCache = cachePreAudio.get(chave);
-        if (emCache && emCache.readyState >= 2) {
+        if (chaveReprodutorAtual === chave && reprodutorAudio.readyState >= 2) {
           try {
-            emCache.currentTime = 0;
-            audioCacheAtivo = emCache;
-            const p = emCache.play();
+            reprodutorAudio.currentTime = 0;
+            const p = reprodutorAudio.play();
             if (p && typeof p.catch === "function") {
               p.catch(() => {
-                audioCacheAtivo = null;
-                tocarListaAudioUrls(urls, 0, token, textoLimpo, elementoAviso, idioma);
+                chaveReprodutorAtual = "";
+                tocarListaAudioUrls(construirUrlsAudio(textoLimpo, idioma), 0, token, textoLimpo, elementoAviso, idioma);
               });
             }
             return;
           } catch (erro) {
-            audioCacheAtivo = null;
+            chaveReprodutorAtual = "";
           }
         }
-        precarregarAudio(textoLimpo, idioma);
+        chaveReprodutorAtual = chave;
+        const urls = construirUrlsAudio(textoLimpo, idioma);
         tocarListaAudioUrls(urls, 0, token, textoLimpo, elementoAviso, idioma);
         return;
       }
@@ -2453,6 +2425,147 @@
       interjection: "interjeição"
     };
 
+    const cacheTraducoes = new Map();
+
+    function parseRespostaGoogle(dados, limpo) {
+      let resultado = "";
+      if (dados && dados[0]) {
+        for (const parte of dados[0]) {
+          if (parte && parte[0]) resultado += parte[0];
+        }
+      }
+      const ehPalavraUnica = !limpo.includes(" ");
+      const entradaDic =
+        dados &&
+        Array.isArray(dados[1]) &&
+        dados[1][0] &&
+        Array.isArray(dados[1][0][2]) &&
+        dados[1][0][2][0];
+      const pesoDic = entradaDic && typeof entradaDic[3] === "number" ? entradaDic[3] : 0;
+      const termoDic =
+        entradaDic && entradaDic[0] ? String(entradaDic[0]).replace(/[!?.]+$/g, "").trim() : "";
+
+      let principal = (resultado || limpo).trim();
+      const alternativas = [];
+      if (ehPalavraUnica && pesoDic >= 0.8 && termoDic) {
+        if (normalizarTexto(termoDic) !== normalizarTexto(principal)) {
+          alternativas.push(principal);
+        }
+        principal = termoDic;
+      }
+
+      for (const alt of extrairAlternativasGoogle(dados, principal)) {
+        if (!alternativas.some((x) => normalizarTexto(x) === normalizarTexto(alt))) {
+          alternativas.push(alt);
+        }
+      }
+
+      const exemplos = [];
+      if (Array.isArray(dados && dados[13])) {
+        for (const ex of dados[13][0] || []) {
+          if (ex && ex[0] && exemplos.length < 2) {
+            const textoEx = String(ex[0]).replace(/<\/?b>/g, "").trim();
+            if (textoEx) exemplos.push(textoEx);
+          }
+        }
+      }
+
+      return {
+        texto: principal,
+        alternativas,
+        idiomaDetectado: dados && dados[2] ? String(dados[2]) : "",
+        exemplos
+      };
+    }
+
+    async function consultarTraducaoApi({ sl, tl, q, comExemplos = false }) {
+      const limpo = String(q || "").trim();
+      if (!limpo) throw new Error("Texto vazio");
+
+      const chaveCache = `${sl}|${tl}|${comExemplos ? "1" : "0"}|${limpo}`;
+      if (cacheTraducoes.has(chaveCache)) {
+        return cacheTraducoes.get(chaveCache);
+      }
+
+      const dts = comExemplos ? "dt=t&dt=bd&dt=at&dt=ex" : "dt=t&dt=bd&dt=at";
+      const enc = encodeURIComponent(limpo);
+      const endpointsGoogle = [
+        `https://clients5.google.com/translate_a/single?client=dict-chrome-ex&sl=${sl}&tl=${tl}&${dts}&q=${enc}`,
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&${dts}&q=${enc}`
+      ];
+
+      for (const url of endpointsGoogle) {
+        try {
+          const resp = await fetch(url, { referrerPolicy: "no-referrer" });
+          if (!resp.ok) continue;
+          const dados = await resp.json();
+          const convertido = parseRespostaGoogle(dados, limpo);
+          if (convertido.texto) {
+            if (cacheTraducoes.size >= 80) {
+              cacheTraducoes.delete(cacheTraducoes.keys().next().value);
+            }
+            cacheTraducoes.set(chaveCache, convertido);
+            return convertido;
+          }
+        } catch (erro) {
+          // Tenta o próximo provedor
+        }
+      }
+
+      // Fallback público oficial (MyMemory) caso Google limite requisições
+      const slMy = sl === "auto" ? (tl === "pt" ? "en" : "pt") : sl;
+      try {
+        const respMy = await fetch(
+          `https://api.mymemory.translated.net/get?q=${enc}&langpair=${slMy}|${tl}`,
+          { referrerPolicy: "no-referrer" }
+        );
+        if (respMy.ok) {
+          const dadosMy = await respMy.json();
+          const trad = dadosMy && dadosMy.responseData && dadosMy.responseData.translatedText;
+          if (trad) {
+            const alts = Array.isArray(dadosMy.matches)
+              ? dadosMy.matches
+                  .map((m) => (m && m.translation ? String(m.translation).trim() : ""))
+                  .filter(
+                    (t) =>
+                      t &&
+                      normalizarTexto(t) !== normalizarTexto(trad) &&
+                      normalizarTexto(t) !== normalizarTexto(limpo)
+                  )
+              : [];
+            const res = {
+              texto: String(trad).trim(),
+              alternativas: Array.from(new Set(alts)).slice(0, 4),
+              idiomaDetectado: slMy,
+              exemplos: []
+            };
+            cacheTraducoes.set(chaveCache, res);
+            return res;
+          }
+        }
+      } catch (erro) {
+        // Segue para fallback local
+      }
+
+      // Último recurso: tenta encontrar no dicionário local de 800 palavras
+      const norm = normalizarTexto(limpo);
+      const local = LISTA_PALAVRAS.find(
+        (p) => normalizarTexto(p.palavra) === norm || p.traducoes.some((t) => normalizarTexto(t) === norm)
+      );
+      if (local) {
+        const ehEn = normalizarTexto(local.palavra) === norm;
+        const destino = tl === "en" ? local.palavra : local.traducoes[0];
+        return {
+          texto: destino,
+          alternativas: ehEn ? local.traducoes.slice(1) : [],
+          idiomaDetectado: ehEn ? "en" : "pt",
+          exemplos: []
+        };
+      }
+
+      throw new Error("Sem conexão com o tradutor");
+    }
+
     let buscaOnlineToken = 0;
 
     async function buscarPalavraOnline(termoBruto) {
@@ -2468,38 +2581,26 @@
       `;
 
       try {
-        const respAuto = await fetch(
-          `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=pt&dt=t&dt=bd&dt=at&dt=ex&q=${encodeURIComponent(termo)}`
-        );
-        if (!respAuto.ok) throw new Error("Falha ao consultar tradução");
-        const dadosAuto = await respAuto.json();
+        const resAuto = await consultarTraducaoApi({
+          sl: "auto",
+          tl: "pt",
+          q: termo,
+          comExemplos: true
+        });
         if (token !== buscaOnlineToken) return;
 
-        const idiomaDetectado = dadosAuto && dadosAuto[2] ? String(dadosAuto[2]) : "en";
+        const idiomaDetectado = resAuto.idiomaDetectado || "en";
         let palavraEn = termo;
         let traducoesPt = [];
 
         if (idiomaDetectado.startsWith("pt")) {
-          const respEn = await fetch(
-            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=pt&tl=en&dt=t&dt=bd&dt=at&q=${encodeURIComponent(termo)}`
-          );
-          if (!respEn.ok) throw new Error("Falha ao traduzir para inglês");
-          const dadosEn = await respEn.json();
+          const resEn = await consultarTraducaoApi({ sl: "pt", tl: "en", q: termo });
           if (token !== buscaOnlineToken) return;
-
-          const tradPrincipalEn =
-            dadosEn && dadosEn[0]
-              ? dadosEn[0].map((p) => (p && p[0] ? p[0] : "")).join("").trim()
-              : termo;
-          palavraEn = tradPrincipalEn.replace(/[!?.]+$/g, "").trim() || termo;
+          palavraEn = resEn.texto.replace(/[!?.]+$/g, "").trim() || termo;
           traducoesPt = [termo];
         } else {
-          const tradPrincipalPt =
-            dadosAuto && dadosAuto[0]
-              ? dadosAuto[0].map((p) => (p && p[0] ? p[0] : "")).join("").trim()
-              : termo;
-          const limpoPt = tradPrincipalPt.replace(/[!?.]+$/g, "").trim() || termo;
-          traducoesPt = [limpoPt, ...extrairAlternativasGoogle(dadosAuto, limpoPt)].slice(0, 6);
+          const limpoPt = resAuto.texto.replace(/[!?.]+$/g, "").trim() || termo;
+          traducoesPt = [limpoPt, ...resAuto.alternativas].slice(0, 6);
         }
 
         // Busca definição, fonética e exemplos em inglês
@@ -2537,21 +2638,14 @@
               }
             }
           } catch (erro) {
-            // Ignora falha na API complementar e usa exemplos do Google
+            // Ignora falha na API complementar
           }
         }
 
-        // Fallback de exemplos do Google Translate (dt=ex)
-        if (exemplosEn.length === 0 && !idiomaDetectado.startsWith("pt") && Array.isArray(dadosAuto && dadosAuto[13])) {
-          for (const ex of dadosAuto[13][0] || []) {
-            if (ex && ex[0] && exemplosEn.length < 2) {
-              const limpo = String(ex[0]).replace(/<\/?b>/g, "").trim();
-              if (limpo) exemplosEn.push(limpo);
-            }
-          }
+        if (exemplosEn.length === 0 && !idiomaDetectado.startsWith("pt") && resAuto.exemplos.length > 0) {
+          exemplosEn.push(...resAuto.exemplos.slice(0, 2));
         }
 
-        // Se ainda não temos exemplos, cria 1 frase simples de uso para treinar áudio
         if (exemplosEn.length === 0) {
           exemplosEn.push(
             palavraEn.includes(" ")
@@ -2560,25 +2654,19 @@
           );
         }
 
-        // Traduz os exemplos para português em uma única chamada
         const exemplos = [];
         try {
-          const textoEx = exemplosEn.join("\n");
-          const respEx = await fetch(
-            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=pt&dt=t&q=${encodeURIComponent(textoEx)}`
-          );
-          if (respEx.ok) {
-            const dadosEx = await respEx.json();
-            const tradsEx =
-              dadosEx && dadosEx[0]
-                ? dadosEx[0].map((p) => (p && p[0] ? p[0] : "")).join("").split("\n")
-                : [];
-            for (let i = 0; i < exemplosEn.length; i++) {
-              exemplos.push({
-                en: exemplosEn[i],
-                pt: (tradsEx[i] || "").trim() || "Exemplo em inglês"
-              });
-            }
+          const resEx = await consultarTraducaoApi({
+            sl: "en",
+            tl: "pt",
+            q: exemplosEn.join("\n")
+          });
+          const tradsEx = resEx.texto.split("\n");
+          for (let i = 0; i < exemplosEn.length; i++) {
+            exemplos.push({
+              en: exemplosEn[i],
+              pt: (tradsEx[i] || "").trim() || "Exemplo em inglês"
+            });
           }
         } catch (erro) {
           for (const en of exemplosEn) {
@@ -2588,15 +2676,15 @@
 
         if (token !== buscaOnlineToken) return;
 
-        // Se buscou em português, refina traduções PT + sinônimos caso útil
         if (idiomaDetectado.startsWith("pt")) {
-          const respPt = await fetch(
-            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=pt&dt=t&dt=bd&q=${encodeURIComponent(palavraEn)}`
-          );
-          if (respPt.ok) {
-            const dPt = await respPt.json();
-            const extras = extrairAlternativasGoogle(dPt, termo);
+          try {
+            const resPt = await consultarTraducaoApi({ sl: "en", tl: "pt", q: palavraEn });
+            const extras = [resPt.texto, ...resPt.alternativas].filter(
+              (t) => normalizarTexto(t) !== normalizarTexto(termo)
+            );
             traducoesPt = [termo, ...extras].slice(0, 5);
+          } catch (erro) {
+            // Mantém termo original
           }
         }
 
@@ -2633,7 +2721,6 @@
         estado.palavraOnlineAtual = itemOnline;
         estado.palavraSelecionadaId = itemOnline.id;
         renderizarCardDetalhe();
-        precarregarAudio(itemOnline.palavra, "en");
       } catch (erro) {
         if (token !== buscaOnlineToken) return;
         elCardDetalhe.innerHTML = `
@@ -2720,8 +2807,6 @@
     function renderizarCardDetalhe() {
       const item = obterPalavraPorId(estado.palavraSelecionadaId) || LISTA_PALAVRAS[0];
       if (!item) return;
-
-      precarregarAudio(item.palavra, "en");
 
       const estaSalva = estado.minhasPalavras.has(item.id);
       const badgeRevisar = item.revisar
@@ -3737,9 +3822,18 @@
             window.location.reload();
           }
         });
-        navigator.serviceWorker.register("./sw.js").catch(() => {
-          // Falha silenciosa caso o ambiente não permita Service Worker
-        });
+        navigator.serviceWorker
+          .register("./sw.js")
+          .then((reg) => {
+            document.addEventListener("visibilitychange", () => {
+              if (document.visibilityState === "visible") {
+                reg.update().catch(() => {});
+              }
+            });
+          })
+          .catch(() => {
+            // Falha silenciosa caso o ambiente não permita Service Worker
+          });
       });
     }
 
@@ -3819,51 +3913,14 @@
         try {
           const sl = idiomaOrigem();
           const tl = idiomaDestino();
-          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&dt=bd&dt=at&q=${encodeURIComponent(limpo)}`;
-          const resp = await fetch(url);
-          if (!resp.ok) throw new Error("Erro na tradução");
-          const dados = await resp.json();
+          const res = await consultarTraducaoApi({ sl, tl, q: limpo });
           if (idReq !== requisicaoAtual) return;
 
-          let resultado = "";
-          if (dados && dados[0]) {
-            for (const parte of dados[0]) {
-              if (parte && parte[0]) resultado += parte[0];
-            }
-          }
-
-          // Para palavra única com entrada dominante no dicionário bilíngue (ex: "Oi" -> "Hi"), prioriza a forma mais comum
-          const ehPalavraUnica = !limpo.includes(" ");
-          const entradaDic =
-            dados &&
-            Array.isArray(dados[1]) &&
-            dados[1][0] &&
-            Array.isArray(dados[1][0][2]) &&
-            dados[1][0][2][0];
-          const pesoDic = entradaDic && typeof entradaDic[3] === "number" ? entradaDic[3] : 0;
-          const termoDic = entradaDic && entradaDic[0] ? String(entradaDic[0]).replace(/[!?.]+$/g, "").trim() : "";
-
-          let principal = (resultado || limpo).trim();
-          const todasOpcoes = [];
-          if (ehPalavraUnica && pesoDic >= 0.8 && termoDic) {
-            if (normalizarTexto(termoDic) !== normalizarTexto(principal)) {
-              todasOpcoes.push(principal);
-            }
-            principal = termoDic;
-          }
-
-          for (const alt of extrairAlternativasGoogle(dados, principal)) {
-            if (!todasOpcoes.some((x) => normalizarTexto(x) === normalizarTexto(alt))) {
-              todasOpcoes.push(alt);
-            }
-          }
-
-          textoTraduzido = principal;
+          textoTraduzido = res.texto || limpo;
           elResultado.textContent = textoTraduzido;
           elResultado.classList.remove("placeholder");
           elAcoes.style.display = "flex";
-          renderizarAlternativas(todasOpcoes);
-          precarregarAudio(textoTraduzido, tl);
+          renderizarAlternativas(res.alternativas);
         } catch (e) {
           if (idReq !== requisicaoAtual) return;
           elResultado.textContent = "Erro ao traduzir. Verifique sua conexão.";
@@ -3878,7 +3935,7 @@
         clearTimeout(timerDebounce);
         this.style.height = "auto";
         this.style.height = Math.min(this.scrollHeight, 140) + "px";
-        timerDebounce = setTimeout(() => traduzir(this.value), 350);
+        timerDebounce = setTimeout(() => traduzir(this.value), 480);
       });
 
       if (elBtnTrocar) {
