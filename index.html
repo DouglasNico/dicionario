@@ -10,6 +10,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Dicionário EN–PT">
   <title>Dicionário Inglês–Português</title>
+  <link rel="preconnect" href="https://translate.google.com" crossorigin>
+  <link rel="preconnect" href="https://translate.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://api.dictionaryapi.dev" crossorigin>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
@@ -933,6 +936,64 @@
       background: transparent;
     }
 
+    .tradutor-alternativas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px 12px;
+    }
+
+    .tradutor-alt-label {
+      font-size: 0.78rem;
+      color: var(--cor-texto-sec);
+      font-weight: 600;
+    }
+
+    .tradutor-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 32px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--cor-borda);
+      background-color: var(--cor-superficie-alt);
+      color: var(--cor-texto);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tradutor-chip:hover {
+      border-color: var(--cor-primaria);
+      color: var(--cor-primaria-texto);
+    }
+
+    .tradutor-chip .icone {
+      width: 14px;
+      height: 14px;
+    }
+
+    .sugestao-online {
+      border-top: 1px solid var(--cor-borda);
+      background-color: var(--cor-primaria-suave);
+      color: var(--cor-primaria-texto);
+      font-weight: 600;
+    }
+
+    .badge-online {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      background-color: var(--cor-primaria-suave);
+      color: var(--cor-primaria-texto);
+      white-space: nowrap;
+    }
+
     /* Lista do vocabulário */
     .btn-vocabulario-toggle {
       width: 100%;
@@ -1379,6 +1440,7 @@
             </button>
           </div>
         </div>
+        <div id="tradutor-alternativas" class="tradutor-alternativas" style="display:none;"></div>
       </div>
 
       <button type="button" id="btn-toggle-vocabulario" class="btn-vocabulario-toggle" aria-expanded="false" aria-controls="lista-palavras">
@@ -1500,6 +1562,7 @@
     const STORAGE_SALVAS = "dic_en_pt_minhas_palavras";
     const STORAGE_SRS = "dic_en_pt_srs";
     const STORAGE_PROGRESSO = "dic_en_pt_progresso";
+    const STORAGE_PALAVRAS_EXTRAS = "dic_en_pt_extras_v1";
 
     const TEMAS_DISPONIVEIS = [
       { id: "todos", label: "Todos os temas" },
@@ -1514,7 +1577,8 @@
       { id: "compras", label: "Compras e Dinheiro" },
       { id: "tempo", label: "Tempo e Clima" },
       { id: "essenciais", label: "Verbos e Conectivos" },
-      { id: "base", label: "Base e Dia a Dia" }
+      { id: "base", label: "Base e Dia a Dia" },
+      { id: "online", label: "Buscas online" }
     ];
 
     const INTERVALOS_SRS_DIAS = [0, 1, 3, 7, 14, 30];
@@ -1592,6 +1656,15 @@
     // =========================================================================
     // ESTADO DA APLICAÇÃO
     // =========================================================================
+    const extrasSalvasIniciais = lerStorage(STORAGE_PALAVRAS_EXTRAS, []);
+    if (Array.isArray(extrasSalvasIniciais)) {
+      for (const extra of extrasSalvasIniciais) {
+        if (extra && extra.id && extra.palavra && !LISTA_PALAVRAS.some((p) => p.id === extra.id)) {
+          LISTA_PALAVRAS.push(extra);
+        }
+      }
+    }
+
     const salvasIniciais = lerStorage(STORAGE_SALVAS, []);
     const srsInicial = lerStorage(STORAGE_SRS, {});
     const progressoInicial = lerStorage(STORAGE_PROGRESSO, {
@@ -1606,6 +1679,7 @@
       nivelFiltro: "todos",
       termoBusca: "",
       palavraSelecionadaId: LISTA_PALAVRAS[0] ? LISTA_PALAVRAS[0].id : "",
+      palavraOnlineAtual: null,
       minhasPalavras: new Set(
         Array.isArray(salvasIniciais)
           ? salvasIniciais.filter((id) => LISTA_PALAVRAS.some((p) => p.id === id))
@@ -1750,9 +1824,44 @@
     let vozPrimada = false;
     let idReproducaoAtual = 0;
     let timerAudioAtual = null;
+    let audioCacheAtivo = null;
+    const cachePreAudio = new Map();
     const reprodutorAudio = new Audio();
     reprodutorAudio.preload = "auto";
     reprodutorAudio.setAttribute("playsinline", "");
+
+    function construirUrlsAudio(textoLimpo, idioma = "en") {
+      const textoCodificado = encodeURIComponent(textoLimpo);
+      const tl = idioma === "pt" ? "pt-BR" : "en";
+      const urls = [
+        `https://translate.google.com/translate_tts?ie=UTF-8&q=${textoCodificado}&tl=${tl}&client=tw-ob`
+      ];
+      if (idioma !== "pt") {
+        urls.push(`https://dict.youdao.com/dictvoice?audio=${textoCodificado}&type=2`);
+      }
+      return urls;
+    }
+
+    function precarregarAudio(texto, idioma = "en") {
+      if (navigator.onLine === false) return;
+      const textoLimpo = String(texto || "").trim();
+      if (!textoLimpo) return;
+      const chave = `${idioma}:${textoLimpo.toLowerCase()}`;
+      if (cachePreAudio.has(chave)) return;
+      if (cachePreAudio.size >= 24) {
+        const maisAntiga = cachePreAudio.keys().next().value;
+        cachePreAudio.delete(maisAntiga);
+      }
+      try {
+        const audio = new Audio();
+        audio.preload = "auto";
+        audio.setAttribute("playsinline", "");
+        audio.src = construirUrlsAudio(textoLimpo, idioma)[0];
+        cachePreAudio.set(chave, audio);
+      } catch (erro) {
+        // Ignora falha silenciosa de pré-carregamento
+      }
+    }
 
     function ativarSessaoPlayback() {
       if ("audioSession" in navigator && navigator.audioSession.type !== "playback") {
@@ -1790,6 +1899,15 @@
 
     function pararAudioAtual() {
       limparTimerAudio();
+      if (audioCacheAtivo) {
+        try {
+          if (!audioCacheAtivo.paused) audioCacheAtivo.pause();
+          audioCacheAtivo.currentTime = 0;
+        } catch (erro) {
+          // Ignora
+        }
+        audioCacheAtivo = null;
+      }
       reprodutorAudio.onplaying = null;
       reprodutorAudio.ontimeupdate = null;
       reprodutorAudio.onended = null;
@@ -1823,7 +1941,7 @@
         evento &&
         evento.target &&
         evento.target.closest &&
-        evento.target.closest("#btn-ouvir-palavra, #btn-fc-ouvir, #btn-quiz-ouvir, #btn-pdd-ouvir, [data-falar-exemplo], [data-ouvir-texto]")
+        evento.target.closest("#btn-ouvir-palavra, #btn-fc-ouvir, #btn-quiz-ouvir, #btn-pdd-ouvir, #btn-tradutor-ouvir, #btn-tradutor-ouvir-original, .tradutor-chip, [data-falar-exemplo], [data-ouvir-texto]")
       ) {
         return;
       }
@@ -1837,7 +1955,7 @@
       }
     }
 
-    function falarComSpeechSynthesis(textoLimpo, elementoAviso, token) {
+    function falarComSpeechSynthesis(textoLimpo, elementoAviso, token, idioma = "en") {
       if (token !== idReproducaoAtual) return;
 
       if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
@@ -1860,12 +1978,24 @@
         const fala = new SpeechSynthesisUtterance(textoLimpo);
         falaAtual = fala;
 
-        const voz = escolherVozIngles();
-        if (voz) {
-          fala.voice = voz;
-          fala.lang = voz.lang;
+        if (idioma === "pt") {
+          const vozPt = estado.vozesDisponiveis.find(
+            (v) => v.lang && v.lang.toLowerCase().startsWith("pt")
+          );
+          if (vozPt) {
+            fala.voice = vozPt;
+            fala.lang = vozPt.lang;
+          } else {
+            fala.lang = "pt-BR";
+          }
         } else {
-          fala.lang = "en-US";
+          const voz = escolherVozIngles();
+          if (voz) {
+            fala.voice = voz;
+            fala.lang = voz.lang;
+          } else {
+            fala.lang = "en-US";
+          }
         }
         fala.volume = 1;
         fala.rate = 0.94;
@@ -1894,10 +2024,10 @@
       }
     }
 
-    function tocarListaAudioUrls(urls, indice, token, textoLimpo, elementoAviso) {
+    function tocarListaAudioUrls(urls, indice, token, textoLimpo, elementoAviso, idioma = "en") {
       if (token !== idReproducaoAtual) return;
       if (indice >= urls.length) {
-        falarComSpeechSynthesis(textoLimpo, elementoAviso, token);
+        falarComSpeechSynthesis(textoLimpo, elementoAviso, token, idioma);
         return;
       }
 
@@ -1913,7 +2043,7 @@
         reprodutorAudio.ontimeupdate = null;
         reprodutorAudio.onended = null;
         reprodutorAudio.onerror = null;
-        tocarListaAudioUrls(urls, indice + 1, token, textoLimpo, elementoAviso);
+        tocarListaAudioUrls(urls, indice + 1, token, textoLimpo, elementoAviso, idioma);
       };
 
       const marcarIniciou = () => {
@@ -1939,7 +2069,7 @@
         if (!iniciou && token === idReproducaoAtual) {
           tentarProximo();
         }
-      }, 4000);
+      }, 2200);
 
       try {
         const promessa = reprodutorAudio.play();
@@ -1954,7 +2084,7 @@
       }
     }
 
-    function falarTexto(texto, elementoAviso) {
+    function falarTexto(texto, elementoAviso, idioma = "en") {
       const textoLimpo = String(texto || "").trim();
       if (!textoLimpo) return;
 
@@ -1963,18 +2093,33 @@
       pararAudioAtual();
       if (elementoAviso) elementoAviso.classList.remove("visivel");
 
-      // Online: HTML5 <audio> usa o canal de mídia no iOS e toca mesmo com a chave no silencioso
+      // Online: Google TTS primeiro (~3x mais rápido que Youdao) + cache local para resposta imediata
       if (navigator.onLine !== false) {
-        const textoCodificado = encodeURIComponent(textoLimpo);
-        const urls = [
-          `https://dict.youdao.com/dictvoice?audio=${textoCodificado}&type=2`,
-          `https://translate.google.com/translate_tts?ie=UTF-8&q=${textoCodificado}&tl=en&client=tw-ob`
-        ];
-        tocarListaAudioUrls(urls, 0, token, textoLimpo, elementoAviso);
+        const urls = construirUrlsAudio(textoLimpo, idioma);
+        const chave = `${idioma}:${textoLimpo.toLowerCase()}`;
+        const emCache = cachePreAudio.get(chave);
+        if (emCache && emCache.readyState >= 2) {
+          try {
+            emCache.currentTime = 0;
+            audioCacheAtivo = emCache;
+            const p = emCache.play();
+            if (p && typeof p.catch === "function") {
+              p.catch(() => {
+                audioCacheAtivo = null;
+                tocarListaAudioUrls(urls, 0, token, textoLimpo, elementoAviso, idioma);
+              });
+            }
+            return;
+          } catch (erro) {
+            audioCacheAtivo = null;
+          }
+        }
+        precarregarAudio(textoLimpo, idioma);
+        tocarListaAudioUrls(urls, 0, token, textoLimpo, elementoAviso, idioma);
         return;
       }
 
-      falarComSpeechSynthesis(textoLimpo, elementoAviso, token);
+      falarComSpeechSynthesis(textoLimpo, elementoAviso, token, idioma);
     }
 
     // =========================================================================
@@ -2241,6 +2386,264 @@
       return pontuadas.map((p) => p.item);
     }
 
+    function extrairAlternativasGoogle(dados, principal) {
+      const vistos = new Set();
+      const chavePrincipal = normalizarTexto(String(principal || "").replace(/[!?.]+$/g, ""));
+      if (chavePrincipal) vistos.add(chavePrincipal);
+      const lista = [];
+
+      const adicionar = (texto) => {
+        const limpo = String(texto || "").replace(/[!?.]+$/g, "").trim();
+        const chave = normalizarTexto(limpo);
+        if (!limpo || !chave || vistos.has(chave)) return;
+        vistos.add(chave);
+        lista.push(limpo);
+      };
+
+      // Dicionário bilíngue (dados[1])
+      if (Array.isArray(dados && dados[1])) {
+        for (const bloco of dados[1]) {
+          if (Array.isArray(bloco && bloco[1])) {
+            for (const termo of bloco[1]) adicionar(termo);
+          }
+        }
+      }
+
+      // Traduções alternativas (dados[5])
+      if (Array.isArray(dados && dados[5])) {
+        for (const bloco of dados[5]) {
+          if (Array.isArray(bloco && bloco[2])) {
+            for (const alt of bloco[2]) {
+              if (alt && alt[0]) adicionar(alt[0]);
+            }
+          }
+        }
+      }
+
+      return lista;
+    }
+
+    function ipaParaComoLer(ipa) {
+      if (!ipa) return "";
+      let s = String(ipa).replace(/[\/\[\]ˈˌ.]/g, "").trim();
+      if (!s) return "";
+      const pares = [
+        ["tʃ", "tch"], ["dʒ", "dj"], ["eɪ", "êi"], ["aɪ", "ai"], ["ɔɪ", "ói"],
+        ["aʊ", "au"], ["oʊ", "ôu"], ["əʊ", "ôu"], ["ɪə", "ía"], ["eə", "éa"],
+        ["ʊə", "úa"], ["iː", "ii"], ["uː", "uu"], ["ɔː", "óo"], ["ɑː", "áa"],
+        ["ɜː", "êr"], ["ər", "âr"], ["ɚ", "âr"], ["θ", "f"], ["ð", "d"],
+        ["ʃ", "x"], ["ʒ", "j"], ["ŋ", "ng"], ["æ", "é"], ["ɛ", "é"],
+        ["ɪ", "i"], ["ʊ", "u"], ["ʌ", "â"], ["ə", "â"], ["ɒ", "ó"],
+        ["ɔ", "ó"], ["ɑ", "á"], ["j", "i"], ["w", "u"], ["ɹ", "r"]
+      ];
+      for (const [de, para] of pares) {
+        s = s.split(de).join(para);
+      }
+      return s;
+    }
+
+    const TRADUCOES_CLASSES = {
+      noun: "substantivo",
+      verb: "verbo",
+      adjective: "adjetivo",
+      adverb: "advérbio",
+      pronoun: "pronome",
+      preposition: "preposição",
+      conjunction: "conjunção",
+      interjection: "interjeição"
+    };
+
+    let buscaOnlineToken = 0;
+
+    async function buscarPalavraOnline(termoBruto) {
+      const termo = String(termoBruto || "").trim();
+      if (!termo) return;
+      const token = ++buscaOnlineToken;
+      fecharSugestoes();
+
+      elCardDetalhe.innerHTML = `
+        <div class="estado-vazio" style="padding:24px 8px;">
+          Buscando <strong>${escaparHtml(termo)}</strong> no dicionário completo...
+        </div>
+      `;
+
+      try {
+        const respAuto = await fetch(
+          `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=pt&dt=t&dt=bd&dt=at&dt=ex&q=${encodeURIComponent(termo)}`
+        );
+        if (!respAuto.ok) throw new Error("Falha ao consultar tradução");
+        const dadosAuto = await respAuto.json();
+        if (token !== buscaOnlineToken) return;
+
+        const idiomaDetectado = dadosAuto && dadosAuto[2] ? String(dadosAuto[2]) : "en";
+        let palavraEn = termo;
+        let traducoesPt = [];
+
+        if (idiomaDetectado.startsWith("pt")) {
+          const respEn = await fetch(
+            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=pt&tl=en&dt=t&dt=bd&dt=at&q=${encodeURIComponent(termo)}`
+          );
+          if (!respEn.ok) throw new Error("Falha ao traduzir para inglês");
+          const dadosEn = await respEn.json();
+          if (token !== buscaOnlineToken) return;
+
+          const tradPrincipalEn =
+            dadosEn && dadosEn[0]
+              ? dadosEn[0].map((p) => (p && p[0] ? p[0] : "")).join("").trim()
+              : termo;
+          palavraEn = tradPrincipalEn.replace(/[!?.]+$/g, "").trim() || termo;
+          traducoesPt = [termo];
+        } else {
+          const tradPrincipalPt =
+            dadosAuto && dadosAuto[0]
+              ? dadosAuto[0].map((p) => (p && p[0] ? p[0] : "")).join("").trim()
+              : termo;
+          const limpoPt = tradPrincipalPt.replace(/[!?.]+$/g, "").trim() || termo;
+          traducoesPt = [limpoPt, ...extrairAlternativasGoogle(dadosAuto, limpoPt)].slice(0, 6);
+        }
+
+        // Busca definição, fonética e exemplos em inglês
+        let classe = "palavra";
+        let ipa = "";
+        const exemplosEn = [];
+        const palavraBaseLookup = palavraEn.split(/\s+/)[0].replace(/[^a-zA-Z'-]/g, "");
+
+        if (palavraBaseLookup && palavraEn.split(/\s+/).length <= 2) {
+          try {
+            const respDic = await fetch(
+              `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(palavraEn.toLowerCase())}`
+            );
+            if (respDic.ok) {
+              const entradas = await respDic.json();
+              const entrada = Array.isArray(entradas) ? entradas[0] : null;
+              if (entrada) {
+                ipa =
+                  entrada.phonetic ||
+                  (Array.isArray(entrada.phonetics) &&
+                    (entrada.phonetics.find((p) => p && p.text) || {}).text) ||
+                  "";
+                if (Array.isArray(entrada.meanings) && entrada.meanings.length > 0) {
+                  const pos = entrada.meanings[0].partOfSpeech || "";
+                  classe = TRADUCOES_CLASSES[pos] || pos || "palavra";
+                  for (const m of entrada.meanings) {
+                    if (!Array.isArray(m.definitions)) continue;
+                    for (const d of m.definitions) {
+                      if (d && d.example && exemplosEn.length < 2) {
+                        exemplosEn.push(d.example);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } catch (erro) {
+            // Ignora falha na API complementar e usa exemplos do Google
+          }
+        }
+
+        // Fallback de exemplos do Google Translate (dt=ex)
+        if (exemplosEn.length === 0 && !idiomaDetectado.startsWith("pt") && Array.isArray(dadosAuto && dadosAuto[13])) {
+          for (const ex of dadosAuto[13][0] || []) {
+            if (ex && ex[0] && exemplosEn.length < 2) {
+              const limpo = String(ex[0]).replace(/<\/?b>/g, "").trim();
+              if (limpo) exemplosEn.push(limpo);
+            }
+          }
+        }
+
+        // Se ainda não temos exemplos, cria 1 frase simples de uso para treinar áudio
+        if (exemplosEn.length === 0) {
+          exemplosEn.push(
+            palavraEn.includes(" ")
+              ? `How do you say "${palavraEn}"?`
+              : `I learned the word ${palavraEn} today.`
+          );
+        }
+
+        // Traduz os exemplos para português em uma única chamada
+        const exemplos = [];
+        try {
+          const textoEx = exemplosEn.join("\n");
+          const respEx = await fetch(
+            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=pt&dt=t&q=${encodeURIComponent(textoEx)}`
+          );
+          if (respEx.ok) {
+            const dadosEx = await respEx.json();
+            const tradsEx =
+              dadosEx && dadosEx[0]
+                ? dadosEx[0].map((p) => (p && p[0] ? p[0] : "")).join("").split("\n")
+                : [];
+            for (let i = 0; i < exemplosEn.length; i++) {
+              exemplos.push({
+                en: exemplosEn[i],
+                pt: (tradsEx[i] || "").trim() || "Exemplo em inglês"
+              });
+            }
+          }
+        } catch (erro) {
+          for (const en of exemplosEn) {
+            exemplos.push({ en, pt: "Exemplo em inglês" });
+          }
+        }
+
+        if (token !== buscaOnlineToken) return;
+
+        // Se buscou em português, refina traduções PT + sinônimos caso útil
+        if (idiomaDetectado.startsWith("pt")) {
+          const respPt = await fetch(
+            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=pt&dt=t&dt=bd&q=${encodeURIComponent(palavraEn)}`
+          );
+          if (respPt.ok) {
+            const dPt = await respPt.json();
+            const extras = extrairAlternativasGoogle(dPt, termo);
+            traducoesPt = [termo, ...extras].slice(0, 5);
+          }
+        }
+
+        const comoLer = ipaParaComoLer(ipa);
+        const idGerado =
+          "online_" +
+          normalizarTexto(palavraEn)
+            .replace(/[^a-z0-9]+/g, "_")
+            .replace(/^_|_$/g, "");
+
+        const existente = LISTA_PALAVRAS.find((p) => p.id === idGerado);
+        if (existente) {
+          selecionarPalavra(existente.id, true);
+          return;
+        }
+
+        const itemOnline = {
+          id: idGerado || `online_${Date.now()}`,
+          palavra: palavraEn,
+          ipa: ipa || "",
+          pronuncia: comoLer ? `${comoLer} (aprox.)` : "Ouça a pronúncia no botão acima",
+          classe,
+          tema: "online",
+          nivel: "Online",
+          traducoes: traducoesPt,
+          exemplos,
+          plural: null,
+          formasIrregulares: null,
+          falsoCognato: null,
+          revisar: false,
+          online: true
+        };
+
+        estado.palavraOnlineAtual = itemOnline;
+        estado.palavraSelecionadaId = itemOnline.id;
+        renderizarCardDetalhe();
+        precarregarAudio(itemOnline.palavra, "en");
+      } catch (erro) {
+        if (token !== buscaOnlineToken) return;
+        elCardDetalhe.innerHTML = `
+          <div class="estado-vazio" style="padding:24px 8px;">
+            Não foi possível buscar <strong>${escaparHtml(termo)}</strong> online. Verifique sua conexão com a internet.
+          </div>
+        `;
+      }
+    }
+
     function renderizarSugestoes() {
       const termo = estado.termoBusca.trim();
       if (!termo) {
@@ -2251,15 +2654,14 @@
       }
 
       const resultados = buscarPalavras(termo).slice(0, 8);
-      if (resultados.length === 0) {
-        elListaSugestoes.innerHTML =
-          '<li class="sugestao-vazio">Nenhuma palavra encontrada.</li>';
-        elListaSugestoes.classList.add("aberta");
-        estado.indiceSugestaoAtiva = -1;
-        return;
-      }
+      const consultaNorm = normalizarTexto(termo);
+      const temExata = resultados.some(
+        (item) =>
+          normalizarTexto(item.palavra) === consultaNorm ||
+          item.traducoes.some((t) => normalizarTexto(t) === consultaNorm)
+      );
 
-      elListaSugestoes.innerHTML = resultados
+      let html = resultados
         .map((item, idx) => {
           const ativa = idx === estado.indiceSugestaoAtiva ? "selecionada" : "";
           return `
@@ -2276,6 +2678,25 @@
         })
         .join("");
 
+      if (navigator.onLine !== false && termo.length >= 2 && !temExata) {
+        const idxOnline = resultados.length;
+        const ativaOnline = idxOnline === estado.indiceSugestaoAtiva ? "selecionada" : "";
+        html += `
+          <li role="option" aria-selected="${idxOnline === estado.indiceSugestaoAtiva}">
+            <button type="button" class="sugestao-btn sugestao-online ${ativaOnline}" data-online-termo="${escaparHtml(termo)}">
+              <span class="sugestao-principal">
+                <span class="sugestao-palavra">Buscar “${escaparHtml(termo)}” online</span>
+                <span class="sugestao-trad">Dicionário completo (qualquer palavra EN/PT)</span>
+              </span>
+              <span class="sugestao-pron">Internet</span>
+            </button>
+          </li>
+        `;
+      } else if (resultados.length === 0) {
+        html = '<li class="sugestao-vazio">Nenhuma palavra encontrada offline.</li>';
+      }
+
+      elListaSugestoes.innerHTML = html;
       elListaSugestoes.classList.add("aberta");
     }
 
@@ -2284,18 +2705,30 @@
       estado.indiceSugestaoAtiva = -1;
     }
 
+    function obterPalavraPorId(id) {
+      return (
+        LISTA_PALAVRAS.find((p) => p.id === id) ||
+        (estado.palavraOnlineAtual && estado.palavraOnlineAtual.id === id
+          ? estado.palavraOnlineAtual
+          : null)
+      );
+    }
+
     // =========================================================================
     // CARD DE DETALHE E LISTA DO VOCABULÁRIO
     // =========================================================================
     function renderizarCardDetalhe() {
-      const item =
-        LISTA_PALAVRAS.find((p) => p.id === estado.palavraSelecionadaId) || LISTA_PALAVRAS[0];
+      const item = obterPalavraPorId(estado.palavraSelecionadaId) || LISTA_PALAVRAS[0];
       if (!item) return;
+
+      precarregarAudio(item.palavra, "en");
 
       const estaSalva = estado.minhasPalavras.has(item.id);
       const badgeRevisar = item.revisar
         ? '<span class="badge-revisar">Em revisão</span>'
-        : "";
+        : item.online
+          ? '<span class="badge-online">Online</span>'
+          : "";
 
       const blocoFalsoCognato = item.falsoCognato
         ? `
@@ -2513,7 +2946,7 @@
     }
 
     function selecionarPalavra(id, irParaDicionario = false) {
-      if (!LISTA_PALAVRAS.some((p) => p.id === id)) return;
+      if (!obterPalavraPorId(id)) return;
       estado.palavraSelecionadaId = id;
       if (irParaDicionario) {
         trocarAba("dicionario");
@@ -2525,9 +2958,21 @@
     }
 
     function alternarSalvarPalavra(id) {
+      const online =
+        estado.palavraOnlineAtual && estado.palavraOnlineAtual.id === id
+          ? estado.palavraOnlineAtual
+          : null;
+
       if (estado.minhasPalavras.has(id)) {
         estado.minhasPalavras.delete(id);
       } else {
+        if (online && !LISTA_PALAVRAS.some((p) => p.id === id)) {
+          LISTA_PALAVRAS.push(online);
+          const extras = LISTA_PALAVRAS.filter((p) => p.online);
+          salvarStorage(STORAGE_PALAVRAS_EXTRAS, extras);
+          popularSeletoresTema();
+          renderizarBarraProgresso();
+        }
         estado.minhasPalavras.add(id);
       }
       salvarStorage(STORAGE_SALVAS, Array.from(estado.minhasPalavras));
@@ -3151,7 +3596,15 @@
           const alvo =
             estado.indiceSugestaoAtiva >= 0 ? botoes[estado.indiceSugestaoAtiva] : botoes[0];
           const id = alvo.getAttribute("data-id");
-          if (id) selecionarPalavra(id);
+          const termoOnline = alvo.getAttribute("data-online-termo");
+          if (id) {
+            selecionarPalavra(id);
+          } else if (termoOnline) {
+            buscarPalavraOnline(termoOnline);
+          }
+        } else if (estado.termoBusca.trim().length >= 2 && navigator.onLine !== false) {
+          evento.preventDefault();
+          buscarPalavraOnline(estado.termoBusca.trim());
         }
       } else if (evento.key === "Escape") {
         fecharSugestoes();
@@ -3171,7 +3624,12 @@
       const btn = evento.target.closest(".sugestao-btn");
       if (!btn) return;
       const id = btn.getAttribute("data-id");
-      if (id) selecionarPalavra(id);
+      const termoOnline = btn.getAttribute("data-online-termo");
+      if (id) {
+        selecionarPalavra(id);
+      } else if (termoOnline) {
+        buscarPalavraOnline(termoOnline);
+      }
     });
 
     document.addEventListener("click", (evento) => {
@@ -3292,6 +3750,7 @@
       const elEntrada = document.getElementById("tradutor-entrada");
       const elResultado = document.getElementById("tradutor-resultado");
       const elAcoes = document.getElementById("tradutor-acoes");
+      const elAlternativas = document.getElementById("tradutor-alternativas");
       const elBtnTrocar = document.getElementById("btn-tradutor-trocar");
       const elBtnOuvirOriginal = document.getElementById("btn-tradutor-ouvir-original");
       const elBtnOuvirTraducao = document.getElementById("btn-tradutor-ouvir");
@@ -3305,6 +3764,7 @@
       let textoTraduzido = "";
       let textoOriginal = "";
       let timerDebounce = null;
+      let requisicaoAtual = 0;
 
       function idiomaOrigem() { return direcao === "pt-en" ? "pt" : "en"; }
       function idiomaDestino() { return direcao === "pt-en" ? "en" : "pt"; }
@@ -3318,75 +3778,113 @@
         elEntrada.placeholder = `Digite em ${nomeOrigem.toLowerCase()}...`;
       }
 
-      function falarTextoIdioma(texto, idioma) {
-        const textoLimpo = String(texto || "").trim();
-        if (!textoLimpo) return;
-        desbloquearAudioNoToque();
-        const token = ++idReproducaoAtual;
-        pararAudioAtual();
-        if (navigator.onLine !== false) {
-          const enc = encodeURIComponent(textoLimpo);
-          const tl = idioma === "pt" ? "pt-BR" : "en";
-          const urls = [
-            `https://translate.google.com/translate_tts?ie=UTF-8&q=${enc}&tl=${tl}&client=tw-ob`,
-            `https://dict.youdao.com/dictvoice?audio=${enc}&type=2`
-          ];
-          tocarListaAudioUrls(urls, 0, token, textoLimpo, null);
+      function renderizarAlternativas(lista) {
+        if (!elAlternativas) return;
+        if (!lista || lista.length === 0) {
+          elAlternativas.innerHTML = "";
+          elAlternativas.style.display = "none";
           return;
         }
-        falarComSpeechSynthesis(textoLimpo, null, token);
+        elAlternativas.innerHTML =
+          `<span class="tradutor-alt-label">Outras formas:</span>` +
+          lista
+            .slice(0, 4)
+            .map(
+              (alt) => `
+                <button type="button" class="tradutor-chip" data-tradutor-alt="${escaparHtml(alt)}" title="Ouvir ${escaparHtml(alt)}">
+                  ${iconeSvg("volume")}
+                  <span>${escaparHtml(alt)}</span>
+                </button>
+              `
+            )
+            .join("");
+        elAlternativas.style.display = "flex";
       }
 
       async function traduzir(texto) {
         textoOriginal = texto;
         const limpo = texto.trim();
+        const idReq = ++requisicaoAtual;
         if (!limpo) {
           elResultado.textContent = "Tradução aparece aqui...";
           elResultado.classList.add("placeholder");
           elAcoes.style.display = "none";
+          renderizarAlternativas([]);
           textoTraduzido = "";
           return;
         }
         elResultado.textContent = "Traduzindo...";
         elResultado.classList.add("placeholder");
+        renderizarAlternativas([]);
         try {
-          const sl = idiomaOrigem() === "pt" ? "pt" : "en";
-          const tl = idiomaDestino() === "pt" ? "pt" : "en";
-          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(limpo)}`;
+          const sl = idiomaOrigem();
+          const tl = idiomaDestino();
+          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&dt=bd&dt=at&q=${encodeURIComponent(limpo)}`;
           const resp = await fetch(url);
           if (!resp.ok) throw new Error("Erro na tradução");
           const dados = await resp.json();
+          if (idReq !== requisicaoAtual) return;
+
           let resultado = "";
           if (dados && dados[0]) {
             for (const parte of dados[0]) {
               if (parte && parte[0]) resultado += parte[0];
             }
           }
-          textoTraduzido = resultado || limpo;
+
+          // Para palavra única com entrada dominante no dicionário bilíngue (ex: "Oi" -> "Hi"), prioriza a forma mais comum
+          const ehPalavraUnica = !limpo.includes(" ");
+          const entradaDic =
+            dados &&
+            Array.isArray(dados[1]) &&
+            dados[1][0] &&
+            Array.isArray(dados[1][0][2]) &&
+            dados[1][0][2][0];
+          const pesoDic = entradaDic && typeof entradaDic[3] === "number" ? entradaDic[3] : 0;
+          const termoDic = entradaDic && entradaDic[0] ? String(entradaDic[0]).replace(/[!?.]+$/g, "").trim() : "";
+
+          let principal = (resultado || limpo).trim();
+          const todasOpcoes = [];
+          if (ehPalavraUnica && pesoDic >= 0.8 && termoDic) {
+            if (normalizarTexto(termoDic) !== normalizarTexto(principal)) {
+              todasOpcoes.push(principal);
+            }
+            principal = termoDic;
+          }
+
+          for (const alt of extrairAlternativasGoogle(dados, principal)) {
+            if (!todasOpcoes.some((x) => normalizarTexto(x) === normalizarTexto(alt))) {
+              todasOpcoes.push(alt);
+            }
+          }
+
+          textoTraduzido = principal;
           elResultado.textContent = textoTraduzido;
           elResultado.classList.remove("placeholder");
           elAcoes.style.display = "flex";
+          renderizarAlternativas(todasOpcoes);
+          precarregarAudio(textoTraduzido, tl);
         } catch (e) {
+          if (idReq !== requisicaoAtual) return;
           elResultado.textContent = "Erro ao traduzir. Verifique sua conexão.";
           elResultado.classList.add("placeholder");
           textoTraduzido = "";
           elAcoes.style.display = "none";
+          renderizarAlternativas([]);
         }
       }
 
       elEntrada.addEventListener("input", function () {
         clearTimeout(timerDebounce);
-        // Auto-resize textarea
         this.style.height = "auto";
         this.style.height = Math.min(this.scrollHeight, 140) + "px";
-        timerDebounce = setTimeout(() => traduzir(this.value), 400);
+        timerDebounce = setTimeout(() => traduzir(this.value), 350);
       });
 
       if (elBtnTrocar) {
         elBtnTrocar.addEventListener("click", function () {
           direcao = direcao === "pt-en" ? "en-pt" : "pt-en";
           atualizarLabels();
-          // Swap: coloca a tradução como entrada
           if (textoTraduzido) {
             elEntrada.value = textoTraduzido;
             elEntrada.style.height = "auto";
@@ -3398,15 +3896,24 @@
         });
       }
 
+      if (elAlternativas) {
+        elAlternativas.addEventListener("click", function (evento) {
+          const btn = evento.target.closest("[data-tradutor-alt]");
+          if (!btn) return;
+          const textoAlt = btn.getAttribute("data-tradutor-alt");
+          if (textoAlt) falarTexto(textoAlt, null, idiomaDestino());
+        });
+      }
+
       if (elBtnOuvirOriginal) {
         elBtnOuvirOriginal.addEventListener("click", function () {
-          falarTextoIdioma(textoOriginal || elEntrada.value, idiomaOrigem());
+          falarTexto(textoOriginal || elEntrada.value, null, idiomaOrigem());
         });
       }
 
       if (elBtnOuvirTraducao) {
         elBtnOuvirTraducao.addEventListener("click", function () {
-          falarTextoIdioma(textoTraduzido, idiomaDestino());
+          falarTexto(textoTraduzido, null, idiomaDestino());
         });
       }
 
