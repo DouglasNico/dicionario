@@ -877,17 +877,44 @@
       }
     }
 
-    .item-palavra-btn {
-      width: 100%;
-      justify-content: space-between;
-      text-align: left;
-      padding: 11px 14px;
+    .item-palavra-card {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px 4px 0;
+      border-radius: 12px;
+      border: 1px solid var(--cor-borda);
       background-color: var(--cor-superficie);
+      min-width: 0;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
     }
 
-    .item-palavra-btn.ativa {
+    .item-palavra-card.ativa {
       border-color: var(--cor-primaria);
       background-color: var(--cor-primaria-suave);
+    }
+
+    .item-palavra-abrir {
+      flex: 1;
+      min-width: 0;
+      justify-content: space-between;
+      text-align: left;
+      padding: 8px 8px 8px 14px;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+    }
+
+    .item-palavra-abrir:active {
+      transform: none;
+    }
+
+    .btn-item-ouvir {
+      flex-shrink: 0;
+    }
+
+    .item-palavra-card.ativa .btn-item-ouvir {
+      background-color: var(--cor-superficie);
     }
 
     .item-esquerda {
@@ -1571,12 +1598,28 @@
       );
     }
 
-    // Referência global evita que o Safari/iOS descarte a fala antes de tocar
+    // Referência global evita que o Safari/iOS descarte o áudio ou fala antes de tocar
     let falaAtual = null;
     let audioCtxDesbloqueado = null;
     let vozPrimada = false;
+    let idReproducaoAtual = 0;
+    let timerAudioAtual = null;
+    const reprodutorAudio = new Audio();
+    reprodutorAudio.preload = "auto";
+    reprodutorAudio.setAttribute("playsinline", "");
+
+    function ativarSessaoPlayback() {
+      if ("audioSession" in navigator && navigator.audioSession.type !== "playback") {
+        try {
+          navigator.audioSession.type = "playback";
+        } catch (erro) {
+          // Ignora caso o navegador bloqueie alteração
+        }
+      }
+    }
 
     function desbloquearAudioNoToque() {
+      ativarSessaoPlayback();
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (AudioCtx) {
@@ -1592,7 +1635,38 @@
       }
     }
 
-    // Pré-aquece as vozes do iOS na primeira interação que não seja botão de áudio
+    function limparTimerAudio() {
+      if (timerAudioAtual !== null) {
+        clearTimeout(timerAudioAtual);
+        timerAudioAtual = null;
+      }
+    }
+
+    function pararAudioAtual() {
+      limparTimerAudio();
+      reprodutorAudio.onplaying = null;
+      reprodutorAudio.ontimeupdate = null;
+      reprodutorAudio.onended = null;
+      reprodutorAudio.onerror = null;
+      try {
+        if (!reprodutorAudio.paused) {
+          reprodutorAudio.pause();
+        }
+      } catch (erro) {
+        // Ignora
+      }
+      if ("speechSynthesis" in window) {
+        try {
+          if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+            window.speechSynthesis.cancel();
+          }
+        } catch (erro) {
+          // Ignora
+        }
+      }
+    }
+
+    // Pré-aquece sessão e vozes do iOS na primeira interação fora dos botões de áudio
     function prepararVozesIOS(evento) {
       if (vozPrimada) return;
       vozPrimada = true;
@@ -1603,7 +1677,7 @@
         evento &&
         evento.target &&
         evento.target.closest &&
-        evento.target.closest("#btn-ouvir-palavra, #btn-fc-ouvir, #btn-quiz-ouvir, #btn-pdd-ouvir, [data-falar-exemplo]")
+        evento.target.closest("#btn-ouvir-palavra, #btn-fc-ouvir, #btn-quiz-ouvir, #btn-pdd-ouvir, [data-falar-exemplo], [data-ouvir-texto]")
       ) {
         return;
       }
@@ -1617,19 +1691,18 @@
       }
     }
 
-    function falarTexto(texto, elementoAviso) {
-      desbloquearAudioNoToque();
+    function falarComSpeechSynthesis(textoLimpo, elementoAviso, token) {
+      if (token !== idReproducaoAtual) return;
 
       if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
         if (elementoAviso) {
-          elementoAviso.textContent = "Este navegador não suporta leitura de voz (speechSynthesis).";
+          elementoAviso.textContent = "Este navegador não suporta leitura de voz.";
           elementoAviso.classList.add("visivel");
         }
         return;
       }
 
       try {
-        // Só cancela se já houver fala ativa para não anular a nova no iOS WebKit
         if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
           window.speechSynthesis.cancel();
         }
@@ -1638,7 +1711,7 @@
         }
 
         atualizarVozes();
-        const fala = new SpeechSynthesisUtterance(texto);
+        const fala = new SpeechSynthesisUtterance(textoLimpo);
         falaAtual = fala;
 
         const voz = escolherVozIngles();
@@ -1657,18 +1730,15 @@
         };
         fala.onerror = (ev) => {
           if (falaAtual === fala) falaAtual = null;
-          // "canceled" ou "interrupted" acontecem ao trocar de palavra rápido; não são erro real
           if (ev && (ev.error === "canceled" || ev.error === "interrupted")) return;
           if (elementoAviso) {
             const detalhe = ev && ev.error ? ` (${ev.error})` : "";
             elementoAviso.textContent =
-              `Não foi possível reproduzir a voz neste dispositivo${detalhe}. Se estiver usando o iPhone pela tela inicial, tente abrir pelo Safari.`;
+              `Não foi possível reproduzir o áudio neste dispositivo${detalhe}.`;
             elementoAviso.classList.add("visivel");
           }
         };
 
-        if (elementoAviso) elementoAviso.classList.remove("visivel");
-        // Chamada síncrona direta dentro do clique para manter permissão de áudio no iOS
         window.speechSynthesis.speak(fala);
       } catch (erro) {
         if (elementoAviso) {
@@ -1676,6 +1746,89 @@
           elementoAviso.classList.add("visivel");
         }
       }
+    }
+
+    function tocarListaAudioUrls(urls, indice, token, textoLimpo, elementoAviso) {
+      if (token !== idReproducaoAtual) return;
+      if (indice >= urls.length) {
+        falarComSpeechSynthesis(textoLimpo, elementoAviso, token);
+        return;
+      }
+
+      limparTimerAudio();
+      let iniciou = false;
+      let falhou = false;
+
+      const tentarProximo = () => {
+        if (falhou || token !== idReproducaoAtual) return;
+        falhou = true;
+        limparTimerAudio();
+        reprodutorAudio.onplaying = null;
+        reprodutorAudio.ontimeupdate = null;
+        reprodutorAudio.onended = null;
+        reprodutorAudio.onerror = null;
+        tocarListaAudioUrls(urls, indice + 1, token, textoLimpo, elementoAviso);
+      };
+
+      const marcarIniciou = () => {
+        if (token !== idReproducaoAtual) return;
+        iniciou = true;
+        limparTimerAudio();
+      };
+
+      reprodutorAudio.onplaying = marcarIniciou;
+      reprodutorAudio.ontimeupdate = marcarIniciou;
+      reprodutorAudio.onended = () => {
+        if (token !== idReproducaoAtual) return;
+        limparTimerAudio();
+        reprodutorAudio.onplaying = null;
+        reprodutorAudio.ontimeupdate = null;
+        reprodutorAudio.onended = null;
+        reprodutorAudio.onerror = null;
+      };
+      reprodutorAudio.onerror = tentarProximo;
+
+      reprodutorAudio.src = urls[indice];
+      timerAudioAtual = setTimeout(() => {
+        if (!iniciou && token === idReproducaoAtual) {
+          tentarProximo();
+        }
+      }, 4000);
+
+      try {
+        const promessa = reprodutorAudio.play();
+        if (promessa && typeof promessa.catch === "function") {
+          promessa.catch((erro) => {
+            if (erro && erro.name === "AbortError") return;
+            tentarProximo();
+          });
+        }
+      } catch (erro) {
+        tentarProximo();
+      }
+    }
+
+    function falarTexto(texto, elementoAviso) {
+      const textoLimpo = String(texto || "").trim();
+      if (!textoLimpo) return;
+
+      desbloquearAudioNoToque();
+      const token = ++idReproducaoAtual;
+      pararAudioAtual();
+      if (elementoAviso) elementoAviso.classList.remove("visivel");
+
+      // Online: HTML5 <audio> usa o canal de mídia no iOS e toca mesmo com a chave no silencioso
+      if (navigator.onLine !== false) {
+        const textoCodificado = encodeURIComponent(textoLimpo);
+        const urls = [
+          `https://dict.youdao.com/dictvoice?audio=${textoCodificado}&type=2`,
+          `https://translate.google.com/translate_tts?ie=UTF-8&q=${textoCodificado}&tl=en&client=tw-ob`
+        ];
+        tocarListaAudioUrls(urls, 0, token, textoLimpo, elementoAviso);
+        return;
+      }
+
+      falarComSpeechSynthesis(textoLimpo, elementoAviso, token);
     }
 
     // =========================================================================
@@ -2130,6 +2283,32 @@
       });
     }
 
+    function criarHtmlItemPalavra(item, ativa, rotuloDireita, mostrarIconeSalva) {
+      const salva = mostrarIconeSalva && estado.minhasPalavras.has(item.id);
+      return `
+        <div class="item-palavra-card ${ativa ? "ativa" : ""}">
+          <button type="button" class="item-palavra-abrir" data-id="${escaparHtml(item.id)}">
+            <span class="item-esquerda">
+              <span class="item-titulo">
+                ${salva ? `<span style="color:var(--cor-salvo-texto);display:inline-flex;">${iconeSvg("salvo")}</span>` : ""}
+                ${escaparHtml(item.palavra)}
+              </span>
+              <span class="item-sub">${escaparHtml(item.traducoes.join(", "))}</span>
+            </span>
+            <span class="item-direita">${escaparHtml(rotuloDireita)}</span>
+          </button>
+          <button
+            type="button"
+            class="btn-icone btn-suave btn-item-ouvir"
+            data-ouvir-texto="${escaparHtml(item.palavra)}"
+            aria-label="Ouvir ${escaparHtml(item.palavra)}"
+          >
+            ${iconeSvg("volume")}
+          </button>
+        </div>
+      `;
+    }
+
     function renderizarListaPalavras() {
       const lista = obterPalavrasVisiveis();
       elTituloLista.textContent = `Vocabulário (${lista.length})`;
@@ -2147,22 +2326,14 @@
 
       const visiveis = lista.slice(0, estado.limiteLista);
       const botoesHtml = visiveis
-        .map((item) => {
-          const ativa = item.id === estado.palavraSelecionadaId ? "ativa" : "";
-          const salva = estado.minhasPalavras.has(item.id);
-          return `
-            <button type="button" class="item-palavra-btn ${ativa}" data-id="${escaparHtml(item.id)}">
-              <span class="item-esquerda">
-                <span class="item-titulo">
-                  ${salva ? `<span style="color:var(--cor-salvo-texto);display:inline-flex;">${iconeSvg("salvo")}</span>` : ""}
-                  ${escaparHtml(item.palavra)}
-                </span>
-                <span class="item-sub">${escaparHtml(item.traducoes.join(", "))}</span>
-              </span>
-              <span class="item-direita">${escaparHtml(item.nivel)}</span>
-            </button>
-          `;
-        })
+        .map((item) =>
+          criarHtmlItemPalavra(
+            item,
+            item.id === estado.palavraSelecionadaId,
+            item.nivel,
+            true
+          )
+        )
         .join("");
 
       const restante = lista.length - visiveis.length;
@@ -2191,17 +2362,7 @@
       }
 
       elListaMinhas.innerHTML = salvas
-        .map(
-          (item) => `
-          <button type="button" class="item-palavra-btn" data-id="${escaparHtml(item.id)}">
-            <span class="item-esquerda">
-              <span class="item-titulo">${escaparHtml(item.palavra)}</span>
-              <span class="item-sub">${escaparHtml(item.traducoes.join(", "))}</span>
-            </span>
-            <span class="item-direita">${escaparHtml(item.tema)}</span>
-          </button>
-        `
-        )
+        .map((item) => criarHtmlItemPalavra(item, false, item.tema, false))
         .join("");
     }
 
@@ -2911,12 +3072,22 @@
         renderizarListaPalavras();
         return;
       }
+      const btnOuvir = evento.target.closest("[data-ouvir-texto]");
+      if (btnOuvir) {
+        falarTexto(btnOuvir.getAttribute("data-ouvir-texto"), null);
+        return;
+      }
       const btn = evento.target.closest("[data-id]");
       if (!btn) return;
       selecionarPalavra(btn.getAttribute("data-id"));
     });
 
     elListaMinhas.addEventListener("click", (evento) => {
+      const btnOuvir = evento.target.closest("[data-ouvir-texto]");
+      if (btnOuvir) {
+        falarTexto(btnOuvir.getAttribute("data-ouvir-texto"), null);
+        return;
+      }
       const btn = evento.target.closest("[data-id]");
       if (!btn) return;
       selecionarPalavra(btn.getAttribute("data-id"), true);
